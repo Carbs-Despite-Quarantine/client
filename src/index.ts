@@ -12,13 +12,13 @@ import {Card, BlackCard} from "./struct/cards";
 
 const socket = io("http://localhost:3000");
 
-var userId: number;
-var roomId: number | null = null;
+let userId: number;
+let roomId: number | null = null;
 
-var users: Record<number, User> = {};
-var room: Room | null = null;
+let users: Record<number, User> = {};
+let room: Room | null = null;
 
-var cards = {};
+let cards = {};
 
 // Used to hide the "Link Copied" notification after a few seconds
 let copyLinkPersitTimer: number | null = null;
@@ -57,6 +57,16 @@ function resetRoomMenu() {
 
   roomId = null;
   room = null;
+}
+
+function clearResponseCards() {
+  $("#cur-black-card").removeClass("responses-shown").removeClass("czar-mode");
+  $("#select-winner").hide();
+  $("#response-cards").empty();
+  selectedCard = null;
+
+  $(".selected-card").removeClass("selected-card");
+  $("#central-action").hide();
 }
 
 function scrollMessages() {
@@ -254,10 +264,29 @@ function addUser(user: User) {
   `);
 }
 
-function populateUserList(users: Record<number, User>) {
-  for (let user in users) {
-    if (users[user].icon && users[user].name) addUser(users[user]);
+function sortUserList() {
+  $("#user-list").empty();
+
+  let activeUsers: Array<User> = [];
+  let inactiveUsers: Array<User> = [];
+
+  for (const roomUserId in users) {
+    let roomUser = users[roomUserId];
+
+    if (roomUser.state === UserState.inactive) inactiveUsers.push(roomUser);
+    else activeUsers.push(roomUser);
   }
+
+  activeUsers.sort((a, b) => b.score - a.score);
+  inactiveUsers.sort((a, b) => b.score - a.score);
+
+  activeUsers.forEach(roomUser => {
+    if (roomUser.icon && roomUser.name) addUser(roomUser);
+  });
+
+  inactiveUsers.forEach(roomUser => {
+    if (roomUser.icon && roomUser.name) addUser(roomUser);
+  })
 }
 
 function setUserState(userId: number, state: UserState) {
@@ -460,7 +489,7 @@ socket.on("init", (data: any) => {
       room.link = window.location.href;
 
       populateChat(room.messages);
-      populateUserList(users);
+      sortUserList();
 
       if (room.curPrompt) setBlackCard(room.curPrompt);
 
@@ -476,7 +505,7 @@ socket.on("userJoined", (data: any) => {
   if (!room) return console.warn("Received user join event when not in a room");
   users[data.user.id] = data.user;
   if (data.message) addMessage(data.message);
-  addUser(data.user);
+  sortUserList();
 });
 
 socket.on("userLeft", (data: any) => {
@@ -485,7 +514,9 @@ socket.on("userLeft", (data: any) => {
     return console.error("Recieved leave message for unknown user #" + data.userId);
   }
   if (data.message) addMessage(data.message);
-  setUserState(data.userId, UserState.inactive);
+
+  users[data.userId].state = UserState.inactive;
+  sortUserList();
 });
 
 socket.on("roomSettings", (data: any) => {
@@ -547,8 +578,8 @@ $("#set-username").submit(event => {
       if (response.message) addMessage(response.message);
 
       // TODO: check room state before assuming choosing phase
-      users[userId].state = UserState.choosing;
-      addUser(users[userId]);
+      if (room.state === RoomState.choosingCards) user.state = UserState.choosing;
+      sortUserList();
     });
   } else {
     console.debug("Creating room...");
@@ -589,7 +620,7 @@ $("#set-username").submit(event => {
       window.history.pushState(null, null as unknown as string, room.link);
 
       populateChat(room.messages);
-      populateUserList(users);
+      sortUserList();
 
       setupSpinner.hide();
     });
@@ -768,21 +799,19 @@ socket.on("selectResponse", (data: any) => {
 socket.on("selectWinner", (data: any) => {
   if (!room) return console.warn("Tried to select winner when not in a room");
 
-  setUserScore(data.userId, users[data.userId].score + 1);
+  users[data.userId].score += 1;
 
   for (const roomUserId in users) {
     let roomUser = users[roomUserId];
-
-    if (roomUser.state === UserState.inactive) return;
-    setUserState(roomUser.id, roomUser.id === data.userId ? UserState.winner : UserState.idle);
+    if (roomUser.state === UserState.inactive) continue;
+    roomUser.state = roomUser.id === data.userId ? UserState.winner : UserState.idle;
   }
+
+  sortUserList();
 
   room.state = RoomState.viewingWinner;
 
-  $("#cur-black-card").removeClass("responses-shown").removeClass("czar-mode");
-  $("#select-winner").hide();
-  $("#response-cards").empty();
-  selectedCard = null;
+  clearResponseCards();
 
   $("#cur-black-card").addClass("winner-shown");
   appendCard(data.card, $("#cur-black-card"));
@@ -800,11 +829,15 @@ socket.on("nextRound", (data: any) => {
   room.state = RoomState.choosingCards;
   for (const roomUserId in users) {
     let roomUser = users[roomUserId];
-    if (roomUser.state === UserState.inactive) return;
-    setUserState(roomUser.id, roomUser.id === data.czar ? UserState.czar : UserState.choosing);
+    if (roomUser.state === UserState.inactive) continue;
+    users[roomUser.id].state = roomUser.id === data.czar ? UserState.czar : UserState.choosing;
   }
 
+  sortUserList();
+
+  clearResponseCards();
   $("#cur-black-card").removeClass("winner-shown");
+
   if (data.card) setBlackCard(data.card);
 });
 
@@ -881,7 +914,7 @@ $("#hand").sortable({
   tolerance: "pointer"
 });
 
-$("#game-wrapper").click(event => {
+$("#game-wrapper").on("click",event => {
   if (!room) return;
 
   if (!submittingCard && selectedCard && ($(event.target).is("#game-wrapper") || $(event.target).is("#hand") || $(event.target).is("#response-cards"))) {
@@ -923,7 +956,7 @@ function submitCard() {
   }
 }
 
-$("#central-action").click(() => {
+$("#central-action").on("click", () => {
   if (!room) return console.warn("Central action button clicked when not in a room");
   let curState = users[userId].state;
 
@@ -950,7 +983,7 @@ $("#central-action").click(() => {
   }
 });
 
-$("#select-winner").click(() => {
+$("#select-winner").on("click", () => {
   if (users[userId].state === UserState.czar && selectedCard) {
     socket.emit("selectWinner", {cardId: selectedCard}, (response: any) => {
       if (response.error) return console.warn("Failed to select winning card:", response.error);

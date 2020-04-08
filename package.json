@@ -1,0 +1,30 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "The web client for Cards Against Quarantine.",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cards-Against-Quarantine/client.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Cards-Against-Quarantine/client/issues"
+  },
+  "homepage": "https://github.com/Cards-Against-Quarantine/client#readme",
+  "dependencies": {
+    "@types/jquery": "^3.3.34",
+    "@types/jqueryui": "^1.12.10",
+    "@types/socket.io-client": "^1.4.32",
+    "jquery": "^3.4.1",
+    "jquery-ui": "^1.12.1",
+    "socket.io-client": "^2.3.0",
+    "ts-loader": "^6.2.2",
+    "typescript": "^3.8.3",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
+  }
+}

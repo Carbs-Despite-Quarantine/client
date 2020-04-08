@@ -1,2 +1,8 @@
+node_modules/
+
 prepros.config
+
 *.css
+*.css.map
+
+*.js

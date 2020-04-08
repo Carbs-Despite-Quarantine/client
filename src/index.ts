@@ -2,9 +2,9 @@ import io from "socket.io-client";
 import $ from "jquery";
 import 'jquery-ui/ui/widgets/sortable';
 
-import {UserState, User} from "./struct/users";
-import {RoomState, Room, Message} from "./struct/rooms";
-import {Card, BlackCard} from "./struct/cards";
+import {User, UserState} from "./struct/users";
+import {Message, Room, RoomState} from "./struct/rooms";
+import {BlackCard, Card} from "./struct/cards";
 
 /********************
  * Global Variables *
@@ -38,6 +38,7 @@ const setupSpinner = $("#setup-spinner") as JQuery;
 const chatHistory = $("#chat-history") as JQuery;
 const chatInput = $("#chat-input") as JQuery;
 const curBlackCard = $("#cur-black-card") as JQuery;
+const centralAction = $("#central-action") as JQuery;
 
 /********************
  * Helper Functions *
@@ -60,13 +61,22 @@ function resetRoomMenu() {
 }
 
 function clearResponseCards() {
-  $("#cur-black-card").removeClass("responses-shown").removeClass("czar-mode");
+  curBlackCard.removeClass("responses-shown").removeClass("czar-mode");
   $("#select-winner").hide();
   $("#response-cards").empty();
   selectedCard = null;
 
   $(".selected-card").removeClass("selected-card");
-  $("#central-action").hide();
+  centralAction.hide();
+}
+
+function startChoosing() {
+  for (const roomUserId in users) {
+    let roomUser = users[roomUserId];
+    if (roomUser.state === UserState.idle) setUserState(roomUser.id, UserState.choosing);
+  }
+
+  if (room) room.state = RoomState.choosingCards;
 }
 
 function scrollMessages() {
@@ -525,6 +535,7 @@ socket.on("roomSettings", (data: any) => {
 
   room.edition = data.edition;
   room.rotateCzar = data.rotateCzar;
+  startChoosing();
 
   if (data.hand) addCardsToDeck(data.hand);
   setBlackCard(data.blackCard);
@@ -657,6 +668,7 @@ $("#start-game").click(() => {
       return console.warn("Failed to setup room:", response.error);
     }
 
+    startChoosing();
     $("#overlay-container").hide();
     addCardsToDeck(response.hand);
     setBlackCard(response.blackCard);
@@ -745,8 +757,17 @@ socket.on("userState", (data: any) => {
 });
 
 socket.on("answersReady", () => {
-  if (users[userId].state !== UserState.czar) return console.warn("Received answersReady state despite not being czar!");
-  $("#central-action").show().text("Read Answers");
+  if (!room) return console.warn("Received answersReady when not in a room");
+  else if (users[userId].state !== UserState.czar) return console.warn("Received answersReady state despite not being czar");
+  else if (room.state !== RoomState.choosingCards) return console.warn("Received answersReady when room was in state #" + room.state);
+  centralAction.show().text("Read Answers");
+});
+
+socket.on("answersNotReady", () => {
+  if (!room) return console.warn("Received answersNotReady when not in a room");
+  else if (users[userId].state !== UserState.czar) return console.warn("Received answersNotReady state despite not being czar");
+  else if (room.state !== RoomState.choosingCards) return console.warn("Received answersNotReady when room was in state #" + room.state);
+  centralAction.hide();
 });
 
 socket.on("startReadingAnswers", (data: any) => {
@@ -782,7 +803,7 @@ socket.on("revealResponse", (data: any) => {
       selectedCard = data.card.id;
 
       $("#select-winner").show();
-      $("#cur-black-card").addClass("czar-mode");
+      curBlackCard.addClass("czar-mode");
       console.debug("Selecting response #" + data.card.id);
       socket.emit("selectResponse", {cardId: data.card.id}, (response: any) => {
         if (response.error) return console.warn("Failed to select response:", response.error);
@@ -813,12 +834,12 @@ socket.on("selectWinner", (data: any) => {
 
   clearResponseCards();
 
-  $("#cur-black-card").addClass("winner-shown");
-  appendCard(data.card, $("#cur-black-card"));
+  curBlackCard.addClass("winner-shown");
+  appendCard(data.card, curBlackCard);
 
   // Show the 'next round' button if we are the winner
   if (data.userId === userId) {
-    $("#central-action").show().text("Next Round");
+    centralAction.show().text("Next Round");
   }
 });
 
@@ -836,7 +857,7 @@ socket.on("nextRound", (data: any) => {
   sortUserList();
 
   clearResponseCards();
-  $("#cur-black-card").removeClass("winner-shown");
+  curBlackCard.removeClass("winner-shown");
 
   if (data.card) setBlackCard(data.card);
 });
@@ -895,7 +916,7 @@ function addCardToDeck(card: Card) {
     }
     cardElement.addClass("selected-card");
     selectedCard = card.id;
-    $("#central-action").show().text("Submit Card");
+    centralAction.show().text("Submit Card");
   });
 }
 
@@ -924,18 +945,18 @@ $("#game-wrapper").on("click",event => {
 
     if (room.state === RoomState.readingCards) {
       $("#select-winner").hide();
-      $("#cur-black-card").removeClass("czar-mode");
+      curBlackCard.removeClass("czar-mode");
       socket.emit("selectResponse", {cardId: null}, (response: any) => {
         if (response.error) return console.warn("Failed to deselect card:", response.error);
       });
     } else {
-      $("#central-action").hide();
+      centralAction.hide();
     }
   }
 })
 
 function submitCard() {
-  $("#central-action").hide();
+  centralAction.hide();
   if (selectedCard && !submittingCard) {
     submittingCard = true;
     let cardId = selectedCard;
@@ -945,7 +966,7 @@ function submitCard() {
       submittingCard = false;
       if (response.error) {
         console.warn("Failed to submit card #" + selectedCard + ":", response.error);
-        return $("#central-action").show().text("Submit Card");
+        return centralAction.show().text("Submit Card");
       }
       selectedCard = null;
       $("#white-card-" + cardId).remove();
@@ -956,7 +977,7 @@ function submitCard() {
   }
 }
 
-$("#central-action").on("click", () => {
+centralAction.on("click", () => {
   if (!room) return console.warn("Central action button clicked when not in a room");
   let curState = users[userId].state;
 
@@ -967,7 +988,7 @@ $("#central-action").on("click", () => {
     }
     socket.emit("nextRound", {}, (response: any) => {
       if (response.error) return console.warn("Failed to start the next round:", response.error);
-      $("#central-action").hide();
+      centralAction.hide();
     });
     return;
   }
@@ -976,7 +997,7 @@ $("#central-action").on("click", () => {
   if (curState === UserState.czar) {
     socket.emit("startReadingAnswers", {}, (response: any) => {
       if (response.error) return console.warn("Failed to start reading answers:", response.error);
-      $("#central-action").hide();
+      centralAction.hide();
     });
   } else if (curState === UserState.choosing) {
     submitCard();

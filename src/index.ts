@@ -586,10 +586,9 @@ $("#set-username").submit(event => {
       $("#overlay-container").hide();
 
       user.name = userName as string;
+      user.state = response.state;
       if (response.message) addMessage(response.message);
 
-      // TODO: check room state before assuming choosing phase
-      if (room.state === RoomState.choosingCards) user.state = UserState.choosing;
       sortUserList();
     });
   } else {

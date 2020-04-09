@@ -1015,3 +1015,15 @@ $("#select-winner").on("click", () => {
     })
   }
 });
+
+$("#recycle-hand").on("click", () => {
+  if (!room || room.state === RoomState.new) return console.warn("Can't recycle hand before room is setup!");
+  socket.emit("recycleHand", (response: any) => {
+    if (response.error) return console.warn("Failed to recycle hand:", response.error);
+    if (response.cards) {
+      $("#hand").empty();
+      addCardsToDeck(response.cards);
+    }
+    if (response.message) addMessage(response.message);
+  });
+});

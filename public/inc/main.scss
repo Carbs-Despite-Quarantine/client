@@ -438,6 +438,29 @@ input[type=text] {
 		}
 	}
 
+	#recycle-hand {
+		position: absolute;
+		background-color: $iconBackground;
+		right: calc(10% + 20px);
+		bottom: $cardHeight * $cardScale / 2 - 10px;
+		padding: 10px;
+		border-radius: 18px;
+		transition: $resizeTransition;
+		cursor: pointer;
+
+		@media only screen and (max-width: $firstTransitionWidth + 30px) {
+			right: calc(10% + 10px);
+		}
+
+		@media only screen and (max-width: $firstTransitionWidth) {
+			right: 20px;
+		}
+
+		i {
+			font-size: 20px;
+		}
+	}
+
 	#hand {
 		background-color: white;
 		position: absolute;
@@ -463,11 +486,14 @@ input[type=text] {
 			border-right: 0;
 		}
 
+		@media only screen and (max-width: $handWidth + 160px) {
+			justify-content: flex-start;
+		}
+
 		@media only screen and (max-width: $handWidth) {
 			overflow-y: hidden;
 			overflow-x: scroll;
 			padding-bottom: 20px;
-			justify-content: flex-start;
 
 			scrollbar-color: $contrastColor transparent;
 

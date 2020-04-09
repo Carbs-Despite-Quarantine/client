@@ -280,7 +280,7 @@ input[type=text] {
 
 		.card {
 			margin: 10px;
-			transition: $resizeTransition;
+			transition: none;
 
 
 			&.selected-card {
@@ -289,18 +289,15 @@ input[type=text] {
 			}
 
 			.card-text::after {
+				bottom: 112px;
 
-				// TODO: fix jumpy bottom text during transition from hover;
-			  bottom: 112px;
-
-				@media only screen and (min-width: 1450px) {
+				@media only screen and (min-width: 1451px) {
 					bottom: 3px;
 				}
-				@media only screen and (min-width: 1550px) {
+				@media only screen and (min-width: 1551px) {
 					bottom: 8px;
 				}
 			}
-
 
 			&:hover {
 				margin: 9px;
@@ -344,6 +341,20 @@ input[type=text] {
 			right: 23%;
 			top: auto;
 			bottom: calc(50% - #{$cardHeight * $cardScale / 2} - 12px);
+		}
+
+		@media only screen and (max-width: 1450px) {
+			&.more-than-three {
+				.card {
+					.card-text::after {
+						bottom: 217px;
+					}
+
+					&:nth-child(1n+4) .card-text::after{
+						bottom: 8px;
+					}
+				}
+			}
 		}
 	}
 

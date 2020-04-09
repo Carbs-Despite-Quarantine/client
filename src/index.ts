@@ -64,6 +64,7 @@ function clearResponseCards() {
   curBlackCard.removeClass("responses-shown").removeClass("czar-mode");
   $("#select-winner").hide();
   $("#response-cards").empty();
+  $("#response-cards").removeClass("more-than-three");
   selectedCard = null;
 
   $(".selected-card").removeClass("selected-card");
@@ -784,6 +785,10 @@ socket.on("startReadingAnswers", (data: any) => {
 
   for (let i = 0; i < data.count; i++) {
     addResponseCard(i, isCzar);
+  }
+
+  if (data.count > 3) {
+    $("#response-cards").addClass("more-than-three");
   }
 });
 

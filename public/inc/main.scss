@@ -438,30 +438,9 @@ input[type=text] {
 		}
 	}
 
-	#recycle-hand {
-		position: absolute;
-		background-color: $iconBackground;
-		right: calc(10% + 20px);
-		bottom: $cardHeight * $cardScale / 2 - 10px;
-		padding: 10px;
-		border-radius: 18px;
-		transition: $resizeTransition;
-		cursor: pointer;
+	$handSettingsWidth: 80px;
 
-		@media only screen and (max-width: $firstTransitionWidth + 30px) {
-			right: calc(10% + 10px);
-		}
-
-		@media only screen and (max-width: $firstTransitionWidth) {
-			right: 20px;
-		}
-
-		i {
-			font-size: 20px;
-		}
-	}
-
-	#hand {
+	#hand-container {
 		background-color: white;
 		position: absolute;
 		border: solid 1px $outlineColor;
@@ -472,11 +451,9 @@ input[type=text] {
 		right: 10%;
 		padding: 10px 0;
 		padding-bottom: 8px;
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
 		border-bottom: none;
 		transition: $resizeTransition;
+		display: flex;
 
 		@media only screen and (max-width: $firstTransitionWidth) {
 			width: 100%;
@@ -486,50 +463,111 @@ input[type=text] {
 			border-right: 0;
 		}
 
-		@media only screen and (max-width: $handWidth + 160px) {
-			justify-content: flex-start;
+		@media only screen and (max-width: $handWidth + 70px) {
+			height: $cardHeight * $cardScale + 20px;
 		}
 
-		@media only screen and (max-width: $handWidth) {
-			overflow-y: hidden;
-			overflow-x: scroll;
-			padding-bottom: 20px;
+		#hand-settings {
+			width: $handSettingsWidth;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
 
-			scrollbar-color: $contrastColor transparent;
-
-			&::-webkit-scrollbar {
-			  height: 15px;
+			@media only screen and (max-width: $handWidth + 70px) {
+				border-left: 1px solid $outlineColor;
 			}
 
-			&::-webkit-scrollbar-thumb {
-			  border-radius: 25px;
-			  background-color: $contrastColor;
-			}
-
-			&::-webkit-scrollbar-track {
-			  border-radius: 25px;
-			  background-color: transparent;
-			}
-		}
-
-		.card {
-			flex: 0 0 auto;
-			margin: 0 $cardSpacing;
-
-			/*
-			&:hover {
-				.card-text::after {
-					bottom: 0;
+			&.no-cards {
+				#recycle-hand {
+					display: none;
 				}
 			}
 
-			.card-text::after {
-			  bottom: 6px;
-			}*/
+			.hand-setting {
+				height: 40px;
+				text-align: center;
+				padding: 10px;
 
-			&.selected-card {
-				border: 2px solid $contrastColor;
-				margin: 0;
+				#recycle-hand {
+					position: relative;
+					top: 5px;
+					margin: 0;
+					background-color: $iconBackground;
+					padding: 10px;
+					border-radius: 18px;
+					transition: $resizeTransition;
+					cursor: pointer;
+
+					i {
+						font-size: 20px;
+					}
+				}
+			}
+		}
+
+		#hand {
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			width: calc(100% - #{$handSettingsWidth});
+			margin-left: $handSettingsWidth;
+			transition: $resizeTransition;
+
+			@media only screen and (max-width: 360px + $handWidth + $handSettingsWidth) {
+				margin-left: 10px;
+				justify-content: flex-start;
+			}
+
+			@media only screen and (max-width: $firstTransitionWidth) {
+				width: 100%;
+				left: 0;
+				right: 0;
+				border-left: 0;
+				border-right: 0;
+			}
+
+			@media only screen and (max-width: $handWidth + 70px) {
+				overflow-y: hidden;
+				overflow-x: scroll;
+				padding-bottom: 20px;
+				scrollbar-color: $contrastColor transparent;
+				margin-left: 0;
+
+				&::-webkit-scrollbar {
+					height: 15px;
+				}
+
+				&::-webkit-scrollbar-thumb {
+					border-radius: 25px;
+					background-color: $contrastColor;
+				}
+
+				&::-webkit-scrollbar-track {
+					border-radius: 25px;
+					background-color: transparent;
+				}
+			}
+
+			.card {
+				flex: 0 0 auto;
+				margin: 0 $cardSpacing;
+
+				@media only screen and (max-width: $handWidth + 70px) {
+					.card-text::after {
+						// TODO: caq text on scrollable hand
+						display: none;
+					}
+				}
+
+				&:hover {
+					margin: 0 ($cardSpacing - 1px);
+				}
+
+				&.selected-card {
+					border: 2px solid $contrastColor;
+					margin: 0 ($cardSpacing - 1px);
+				}
 			}
 		}
 	}
@@ -553,8 +591,8 @@ input[type=text] {
 			width: 20%;
 		}
 
-		@media only screen and (max-width: $handWidth) {
-			height: calc(100% - #{$cardHeight * $cardScale} - 51px);
+		@media only screen and (max-width: $handWidth + 70px) {
+			height: calc(100% - #{$cardHeight * $cardScale} - 59px);
 			width: 25%;
 		}
 

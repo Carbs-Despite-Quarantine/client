@@ -33,6 +33,9 @@ let selectedCard: number | null = null;
 // Set to true while waiting for a server response from selectCard
 let submittingCard = false;
 
+// Set to true while waiting for a response from recycleHand
+let recyclingCards = false;
+
 // jQuery element cache
 const setupSpinner = $("#setup-spinner") as JQuery;
 const chatHistory = $("#chat-history") as JQuery;
@@ -931,7 +934,7 @@ function addCardToDeck(card: Card) {
 }
 
 function addCardsToDeck(newCards: Record<number, Card>) {
-  $("#recycle-hand").show();
+  $("#hand-settings").removeClass("no-cards");
   for (let cardId in newCards) {
     addCardToDeck(newCards[cardId]);
   }
@@ -1024,8 +1027,14 @@ $("#select-winner").on("click", () => {
 });
 
 $("#recycle-hand").on("click", () => {
-  if (!room || room.state === RoomState.new) return console.warn("Can't recycle hand before room is setup!");
+  if (recyclingCards) return;
+  else if (!room || room.state === RoomState.new) return console.warn("Can't recycle hand before room is setup!");
+
+  recyclingCards = true;
+  $("#recycle-hand").children("i").addClass("fa-spin");
   socket.emit("recycleHand", (response: any) => {
+    $("#recycle-hand").children("i").removeClass("fa-spin");
+    recyclingCards = false;
     if (response.error) return console.warn("Failed to recycle hand:", response.error);
     if (response.cards) {
       $("#hand").empty();

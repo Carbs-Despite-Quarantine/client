@@ -3,6 +3,8 @@ export enum UserState {
   "choosing",
   "czar",
   "winner",
+  "nextCzar",
+  "winnerAndNextCzar",
   "inactive"
 }
 

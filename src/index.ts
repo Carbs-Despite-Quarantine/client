@@ -243,17 +243,19 @@ function populateChat(messages: Record<number, Message>) {
  * User List *
  *************/
 
-function getStateString(state: UserState) {
+function getStateString(state: UserState): string {
   switch(state) {
     case UserState.winner:
+    case UserState.winnerAndNextCzar:
       return "Winner";
     case UserState.czar:
       return "Card Czar";
     case UserState.idle:
+    case UserState.nextCzar:
       return "Ready";
     case UserState.choosing:
       return "Choosing";
-    case UserState.inactive:
+    default:
       return "Inactive";
   }
 }
@@ -824,12 +826,16 @@ socket.on("selectResponse", (data: any) => {
 socket.on("selectWinner", (data: any) => {
   if (!room) return console.warn("Tried to select winner when not in a room");
 
-  users[data.userId].score += 1;
+  users[data.winnerId].score += 1;
 
   for (const roomUserId in users) {
     let roomUser = users[roomUserId];
     if (roomUser.state === UserState.inactive) continue;
-    roomUser.state = roomUser.id === data.userId ? UserState.winner : UserState.idle;
+    if (roomUser.id === data.winnerId) {
+      if (!room.rotateCzar || roomUser.id === data.nextCzarId) roomUser.state = UserState.winnerAndNextCzar;
+      else roomUser.state = UserState.winner;
+    } else if (roomUser.id === data.nextCzarId) roomUser.state = UserState.nextCzar;
+    else roomUser.state = UserState.idle;
   }
 
   sortUserList();
@@ -841,15 +847,15 @@ socket.on("selectWinner", (data: any) => {
   curBlackCard.addClass("winner-shown");
   appendCard(data.card, curBlackCard);
 
-  // Show the 'next round' button if we are the winner
-  if (data.userId === userId) {
+  // Show the 'next round' button if we are the next czar
+  if (data.nextCzarId === userId) {
     centralAction.show().text("Next Round");
   }
 });
 
 socket.on("nextRound", (data: any) => {
   if (!room) return console.warn("Tried to start next round when not in a room");
-  console.debug("Starting next round with user #" + data.czar + " as the card czar", room, data);
+  console.debug("Starting next round with user #" + data.czar + " as the card czar");
 
   room.state = RoomState.choosingCards;
   for (const roomUserId in users) {
@@ -988,8 +994,8 @@ centralAction.on("click", () => {
 
   // Go to the next round if 'Next Round' button is shown
   if (room.state === RoomState.viewingWinner) {
-    if (curState !== UserState.winner) {
-      return console.warn("Non-winner tried to start next round!");
+    if (curState !== UserState.nextCzar && curState != UserState.winnerAndNextCzar) {
+      return console.warn("User who is not selected as next czar tried to start next round!");
     }
     socket.emit("nextRound", {}, (response: any) => {
       if (response.error) return console.warn("Failed to start the next round:", response.error);

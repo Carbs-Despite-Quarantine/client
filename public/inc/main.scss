@@ -826,9 +826,9 @@ input[type=text] {
 							width: auto;
 							background-color: $iconBackground;
 							border-radius: 20px;
-							padding: 2px;
+							padding: 2px 6px;
 
-							div {
+							div:not(.excess-likes) {
 								margin: 2px;
 								width: 1em;
 								height: 1em;
@@ -851,6 +851,20 @@ input[type=text] {
 											transition: 0.2s ease;
 										}
 									}
+								}
+							}
+
+							.excess-likes {
+								padding: 0 4px;
+								display: flex;
+								justify-content: center;
+								align-items: center;
+								cursor: default;
+								@include disable-selection;
+
+								span {
+									font-size: 14px;
+									font-weight: 600;
 								}
 							}
 						}

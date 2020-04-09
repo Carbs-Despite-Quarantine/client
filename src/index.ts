@@ -175,11 +175,23 @@ function addLikes(msgId: number, userIds: Array<number>, addToMessage=true) {
       heart.addClass("fas");
     }
     let user = users[likeId];
-    likesDiv.append(`
+    let likesChildren = likesDiv.children();
+
+    if (likesChildren.length < 4) {
+      likesDiv.append(`
       <div class="msg-like">
         <i class="fas fa-${user.icon}" title="Liked by ${user.name}"></i>
       </div>
     `);
+    } else if (likesChildren.length === 4) {
+      likesDiv.append(`
+        <div class="excess-likes">
+          <span>+1</span>
+        </div>
+      `);
+    } else {
+      likesDiv.children(".excess-likes").children("span").text("+" + (message.likes.length - 3));
+    }
   });
   scrollMessages();
 }

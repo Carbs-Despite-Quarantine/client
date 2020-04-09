@@ -925,6 +925,7 @@ function addCardToDeck(card: Card) {
 }
 
 function addCardsToDeck(newCards: Record<number, Card>) {
+  $("#recycle-hand").show();
   for (let cardId in newCards) {
     addCardToDeck(newCards[cardId]);
   }

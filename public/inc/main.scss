@@ -596,6 +596,11 @@ input[type=text] {
 			width: 25%;
 		}
 
+		// TODO: better layout on small screens
+		@media only screen and (max-width: 800px) {
+			display: none;
+		}
+
 		h1 {
 			font-size: 1.3em;
 			margin: 3px 0;

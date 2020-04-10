@@ -13,6 +13,8 @@ import {BlackCard, Card} from "./struct/cards";
 const socket = io("http://localhost:3000");
 
 let userId: number;
+let userToken: string | undefined;
+
 let roomId: number | null = null;
 
 let users: Record<number, User> = {};
@@ -479,8 +481,9 @@ socket.on("iconTaken", (event: any) => {
 
 socket.on("init", (data: any) => {
   if (data.error) return console.error("Failed to initialize socket:", data.error);
-  console.debug("Obtained userId " + data.userId);
+  console.debug("Obtained userId " + data.userId + " and token " + data.userToken);
   userId = data.userId;
+  userToken = data.userToken;
   let roomIdStr = getURLParam("room");
   let roomToken: string | null= null;
 
@@ -526,6 +529,13 @@ socket.on("init", (data: any) => {
   } else {
     populateIconSelector(data.icons);
     setupSpinner.hide();
+  }
+});
+
+socket.on('reconnect_attempt', () => {
+  socket.io.opts.query = {
+    userId: userId,
+    userToken: userToken
   }
 });
 
@@ -773,11 +783,11 @@ socket.on("userState", (data: any) => {
   setUserState(data.userId, data.state);
 });
 
-socket.on("answersReady", () => {
+socket.on("answersReady", (data: any) => {
   if (!room) return console.warn("Received answersReady when not in a room");
   else if (users[userId].state !== UserState.czar) return console.warn("Received answersReady state despite not being czar");
   else if (room.state !== RoomState.choosingCards) return console.warn("Received answersReady when room was in state #" + room.state);
-  centralAction.show().text("Read Answers");
+  centralAction.show().text("Read Answers (" + data.count + "/" + data.maxResponses + ")");
 });
 
 socket.on("answersNotReady", () => {

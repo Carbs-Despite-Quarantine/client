@@ -85,6 +85,12 @@ function startChoosing() {
   if (room) room.state = RoomState.choosingCards;
 }
 
+function setWinner(card: Card) {
+  clearResponseCards();
+  curBlackCard.addClass("winner-shown");
+  appendCard(card, curBlackCard);
+}
+
 function scrollMessages() {
   chatHistory.scrollTop(chatHistory.prop("scrollHeight"));
 }
@@ -524,6 +530,22 @@ socket.on("init", (data: any) => {
 
       if (room.curPrompt) setBlackCard(room.curPrompt);
 
+      if (room.state === RoomState.readingCards && response.responsesCount > 0) {
+        curBlackCard.addClass("responses-shown");
+        if (response.responsesCount > 3) $("#response-cards").addClass("more-than-three");
+
+        for (let i = 0; i < response.responsesCount; i++) {
+          if (response.revealedResponses.hasOwnProperty(i)) {
+            const card = response.revealedResponses[i];
+            appendCard(card, $("#response-cards"), true, "response-revealed-" + card.id);
+          } else addResponseCard(i, false);
+        }
+
+        if (room.selectedResponse) $("#response-revealed-" + room.selectedResponse).addClass("selected-card");
+      } else if (room.state === RoomState.viewingWinner && response.winningCard) {
+        setWinner(response.winningCard);
+      }
+
       setupSpinner.hide();
     });
   } else {
@@ -690,7 +712,7 @@ $("#start-game").click(() => {
     setupSpinner.hide();
 
     if (response.error) {
-      $("#room-setup-window").show()
+      $("#room-setup-window").show();
       $("#user-setup-window").hide();
       return console.warn("Failed to setup room:", response.error);
     }
@@ -878,10 +900,7 @@ socket.on("selectWinner", (data: any) => {
 
   room.state = RoomState.viewingWinner;
 
-  clearResponseCards();
-
-  curBlackCard.addClass("winner-shown");
-  appendCard(data.card, curBlackCard);
+  setWinner(data.card);
 
   // Show the 'next round' button if we are the next czar
   if (data.nextCzarId === userId) {
@@ -934,9 +953,9 @@ function addResponseCard(id: number, isCzar: boolean) {
   }
 }
 
-function appendCard(card: Card, target: JQuery, isWhite=true) {
+function appendCard(card: Card, target: JQuery, isWhite=true, id?: string) {
   let color = isWhite ? "white" : "black";
-  let id = color + "-card-" + card.id;
+  if (!id) id = color + "-card-" + card.id;
   let html = `<div class="card ${color} front" id="${id}">`;
   if (card instanceof BlackCard) {
     if (card.draw === 2) html += `<div class="special draw"></div>`;

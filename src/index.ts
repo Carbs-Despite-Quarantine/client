@@ -674,7 +674,7 @@ $("#start-game").click(() => {
   $("#user-setup-window").show();
   setupSpinner.show();
 
-  let title = $("#settings-title");
+  const title = $("#settings-title");
   title.children("h1").text("Configuring Room...");
   title.children("p").text("Please wait a second.");
   title.show();
@@ -696,13 +696,23 @@ $("#start-game").click(() => {
     }
 
     startChoosing();
-    $("#overlay-container").hide();
     addCardsToDeck(response.hand);
     setBlackCard(response.blackCard);
+
+    title.children("h1").text("Room Created!");
+    title.children("p").text("Send your friends the link to add them.");
+
+    $("#room-link-window").show();
+    $("#room-link-box-text").text(room ? (room.link as string) : "Error");
   });
 });
 
-$("#room-link").click(() => {
+$("#enter-room").on("click", () => {
+  $("#overlay-container").hide();
+});
+
+// We can't use => since we need access to 'this'
+$(".room-link").on("click", function() {
   if (!room || !room.link) return console.warn("Not in a room!");
 
   // Actually copy the link
@@ -715,16 +725,17 @@ $("#room-link").click(() => {
   fake.remove();
 
   // "Link Copied!" notification logic
-  $("#link-copy-notification").show().css("opacity", 100).removeClass("visible");
+  $(this).parent().append(`
+    <div class="link-copy-notification" style="display: none;">Link Copied!</div>
+  `);
+  $(".link-copy-notification").show().css("opacity", 100).removeClass("visible");
   if (copyLinkFadeTimer) clearTimeout(copyLinkFadeTimer);
   if (copyLinkPersitTimer) clearTimeout(copyLinkPersitTimer);
   copyLinkPersitTimer = setTimeout(() => {
-    $("#link-copy-notification").css("opacity", 0).addClass("visible");
+    $(".link-copy-notification").css("opacity", 0).addClass("visible");
     if (copyLinkFadeTimer) clearTimeout(copyLinkFadeTimer);
     copyLinkFadeTimer = setTimeout(() => {
-      if ($("#link-copy-notification").hasClass("visible")) {
-        $("#link-copy-notification").removeClass("visible").hide();
-      }
+      $(".link-copy-notification").remove();
     }, 2000);
   }, 1000);
 });

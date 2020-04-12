@@ -193,6 +193,56 @@ input[type=text] {
 	}
 }
 
+.room-link {
+	display: block;
+	margin: 2px 2px;
+	color: black;
+	cursor: pointer;
+	font-size: 20px;
+
+	&:hover {
+		color: $systemMsgColor;
+		margin: 1px 1px;
+		font-size: 22px;
+	}
+
+	&:active {
+		margin: 0;
+		font-size: 24px;
+	}
+}
+
+.link-copy-notification {
+	position: absolute;
+	background-color: white;
+	padding: 10px 15px;
+	border-radius: 10px;
+	font-weight: 700;
+	border: 2px solid $outlineColor;
+	z-index: 10;
+
+	&.visible {
+		transition: opacity 2s ease-out;
+	}
+
+	&:before,
+	&:after {
+		content: "";
+		position:absolute;
+		z-index:12;
+		width: 0;
+		height: 0;
+		border: solid 10px transparent;
+		border-bottom: 0;
+		border-top-color: white;
+	}
+
+	&:before {
+		z-index:11;
+		border-top-color: $outlineColor;
+	}
+}
+
 #game-wrapper {
 	background-color: #f0f0f0;
 	height: 100%;
@@ -729,59 +779,21 @@ input[type=text] {
 			}
 
 			#chat-header {
-
-				#room-link {
+				#link-on-chat {
 					float: right;
-					display: block;
-					margin: 2px 2px;
-					color: black;
-					font-size: 20px;
-					cursor: pointer;
-
-					&:hover {
-						color: $systemMsgColor;
-						margin: 1px 1px;
-						font-size: 22px;
-					}
-
-					&:active {
-						margin: 0px 0px;
-						font-size: 24px;
-					}
 				}
 
-				#link-copy-notification {
-					position: absolute;
+				.link-copy-notification {
 					top: -45px;
 					right: -10px;
-					background-color: white;
-					padding: 10px 15px;
-					border-radius: 10px;
-					font-weight: 700;
-					border: 2px solid $outlineColor;
-					z-index: 10;
-
-					&.visible {
-						transition: opacity 2s ease-out;
-					}
 
 					&:before,
 					&:after {
-					    content: "";
-					    position:absolute;
 					    bottom: -10px;
 					    right: 20px;
-					    z-index:12;
-					    width: 0;
-					    height: 0;
-					    border: solid 10px transparent;
-					    border-bottom: 0;
-					    border-top-color: white;
 					}
 					&:before {
 					    bottom:-12px;
-					    z-index:11;
-					    border-top-color: $outlineColor;
 					}
 
 					@media only screen and (max-width: $firstTransitionWidth) {
@@ -950,7 +962,6 @@ input[type=text] {
 		#settings-panel {
 			padding: 20px;
 			text-align: center;
-			align: center;
 
 			#select-icon {
 				#icons {
@@ -987,6 +998,50 @@ input[type=text] {
 						&.selected {
 							border-color: black;
 							background-color: $contrastColor;
+						}
+					}
+				}
+			}
+
+			#room-link-window {
+				#room-link-box-container {
+					margin: 0 0 20px;
+
+					#room-link-box {
+						margin: 0 auto;
+						display: inline-flex;
+						justify-content: left;
+						align-items: center;
+
+						#link-on-window {
+							padding: 0 4px;
+						}
+
+						#room-link-box-text {
+							padding: 0 4px;
+							text-align: left;
+							margin: 0 4px;
+							color: #2264bf;
+							max-width: 200px;
+						}
+
+						.link-copy-notification {
+							top: 95px;
+							left: 85px;
+
+							@media only screen and (max-width: $userOverlayWidth + 40px) {
+								// TODO: position notification correctly on small screens
+							}
+
+							&:before,
+							&:after {
+								bottom: -10px;
+								left: 20px;
+							}
+
+							&:before {
+								bottom: -12px;
+							}
 						}
 					}
 				}

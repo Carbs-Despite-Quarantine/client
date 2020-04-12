@@ -33,10 +33,9 @@
 		<div class="text-container" id="chat-container">
 			<div id="chat-header">
 				<h1>Chat</h1>
-				<a id="room-link" title="Copy Room Link">
+				<a class="room-link" id="link-on-chat" title="Copy Room Link">
 					<i class="fas fa-link"></i>
 				</a>
-				<div id="link-copy-notification" style="display: none;">Link Copied!</div>
 			</div>
 			<div id="chat-history" class="icon-list"></div>
 			<input type="text" id="chat-input" placeholder="Type a message" maxlength="256" />
@@ -62,31 +61,40 @@
 					<br /><br />
 					<input type="submit" value="Create Room" id="set-username-submit" disabled/>
 				</form>
+				<div id="room-link-window" hidden>
+					<div id="room-link-box-container">
+						<div id="room-link-box">
+							<a class="room-link" id="link-on-window" title="Copy Link">
+								<i class="fas fa-link"></i>
+							</a>
+							<span id="room-link-box-text"></span>
+						</div>
+					</div>
+					<button id="enter-room">Close</button>
+				</div>
 			</div>
 		</div>
 		<div class="overlay-window" id="room-setup-window" hidden>
 			<div id="room-settings">
-					<h1>Room Setup</h1>
-					<p>Adjust these settings to fine-tune your game.</p>
-					<h2>General</h2>
-					<div class="room-option-dropdown">
-						<label class="select-label">Edition</label>
-						<select id="select-edition" required>
-						</select>
-					</div>
-					<div class="room-option-dropdown">
-						<label class="select-label">Card Czar</label>
-						<select id="select-czar" required>
-							<option value="winner">Winner</option>
-							<option value="rotate">Rotate</option>
-						</select>
-					</div>
-					<h2>Expansions</h2>
-					<div id="expansions-list">
-					</div>
-					<br />
-					<button id="start-game">Start Game</button>
+				<h1>Room Setup</h1>
+				<p>Adjust these settings to fine-tune your game.</p>
+				<h2>General</h2>
+				<div class="room-option-dropdown">
+					<label class="select-label">Edition</label>
+					<select id="select-edition" required>
+					</select>
 				</div>
+				<div class="room-option-dropdown">
+					<label class="select-label">Card Czar</label>
+					<select id="select-czar" required>
+						<option value="winner">Winner</option>
+						<option value="rotate">Rotate</option>
+					</select>
+				</div>
+				<h2>Expansions</h2>
+				<div id="expansions-list"></div>
+				<br />
+				<button id="start-game">Start Game</button>
 			</div>
 		</div>
 	</div>

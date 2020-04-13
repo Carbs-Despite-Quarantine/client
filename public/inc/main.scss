@@ -357,67 +357,63 @@ input[type=text] {
 				margin: 15px;
 			}
 
-			@media only screen and (min-height: 810px) {
-				#response-cards {
-					display: flex;
-					margin: 15px;
+			flex-direction: row;
 
-					.card {
-						margin: 1px 5px;
+			#cur-black-card {
+				margin-left: 40px;
+			}
 
-						&:hover {
-							margin: 0 4px;
-						}
+			#response-cards {
+				display: flex;
+				flex-wrap: wrap;
+				margin: 30px;
+				justify-content: center;
+				max-height: 100%;
+				overflow-y: auto;
 
-						&.selected-card {
-							border: 2px solid $contrastColor;
-							margin: 0 4px;
-						}
+				padding-bottom: 20px;
+				scrollbar-color: $contrastColor transparent;
+
+				&::-webkit-scrollbar {
+					width: 10px;
+				}
+
+				&::-webkit-scrollbar-thumb {
+					border-radius: 15px;
+					background-color: $contrastColor;
+				}
+
+				&::-webkit-scrollbar-track {
+					border-radius: 15px;
+					background-color: $outlineColor;
+				}
+
+				.card {
+					margin: 5px;
+
+					&:hover {
+						margin: 4px;
+					}
+
+					&.selected-card {
+						border: 2px solid $contrastColor;
+						margin: 4px;
 					}
 				}
 			}
-			@media only screen and (max-height: 809px) {
-				flex-direction: row;
 
+			@media only screen and (max-width: 480px) {
 				#cur-black-card {
-					margin-left: 40px;
+					margin: 0 0 0 10px;
+					transform: none;
 				}
 
 				#response-cards {
-					display: flex;
-					flex-wrap: wrap;
-					margin: 30px;
-					justify-content: center;
-					max-height: 100%;
-					overflow-y: auto;
+					width: $cardWidth;
+					margin: 0;
 
 					.card {
-						margin: 5px;
-
-						&:hover {
-							margin: 4px;
-						}
-
-						&.selected-card {
-							border: 2px solid $contrastColor;
-							margin: 4px;
-						}
-					}
-				}
-
-				@media only screen and (max-width: 480px) {
-					#cur-black-card {
-						margin: 0 0 0 10px;
-						transform: none;
-					}
-
-					#response-cards {
-						width: $cardWidth;
-						margin: 0;
-
-						.card {
-							flex: 0 0 auto;
-						}
+						flex: 0 0 auto;
 					}
 				}
 			}

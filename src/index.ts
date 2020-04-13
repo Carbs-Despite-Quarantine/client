@@ -70,7 +70,6 @@ function clearResponseCards() {
   centerCards.removeClass("responses-shown").removeClass("czar-mode");
   $("#select-winner").hide();
   $("#response-cards").empty();
-  $("#response-cards").removeClass("more-than-three");
   selectedCard = null;
 
   $(".selected-card").removeClass("selected-card");
@@ -533,7 +532,6 @@ socket.on("init", (data: any) => {
 
       if (room.state === RoomState.readingCards && response.responsesCount > 0) {
         centerCards.addClass("responses-shown");
-        if (response.responsesCount > 3) $("#response-cards").addClass("more-than-three");
 
         for (let i = 0; i < response.responsesCount; i++) {
           if (response.revealedResponses.hasOwnProperty(i)) {
@@ -844,20 +842,8 @@ socket.on("startReadingAnswers", (data: any) => {
 
   centerCards.addClass("responses-shown");
 
-  let visibleResponses = data.count;
-  if (visibleResponses > 6) visibleResponses = 6;
-
-  for (let i = 0; i < visibleResponses; i++) {
+  for (let i = 0; i < data.count; i++) {
     addResponseCard(i, isCzar);
-  }
-
-  if (visibleResponses > 3) {
-    $("#response-cards").addClass("more-than-three");
-  }
-
-  if (data.count > 6) {
-    $("#response-controls").show();
-    $("#response-page-left").addClass("disabled");
   }
 });
 

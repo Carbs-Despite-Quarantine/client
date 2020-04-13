@@ -9,6 +9,7 @@ $iconSize: 2.2em;
 $handWidth: 7 * ($cardWidth * $cardScale + 2 * $cardSpacing);
 $minHandMargin: 400px;
 $firstTransitionWidth: $handWidth + $minHandMargin;
+$secondTransitionWidth: 800px;
 
 $outlineColor: #9c9c9c;
 $contrastColor: #ffd200;
@@ -75,6 +76,10 @@ input[type=text] {
   -moz-border-radius: 18px * $cardScale;
   border-radius: 18px * $cardScale;
   z-index: 2;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	border: solid 1px black;
 
   &.black {
 	  background-color: black;
@@ -84,7 +89,6 @@ input[type=text] {
 	&.white {
 	  background-color: white;
 	  color: black;
-	  border: solid 1px black;
 	}
 
 	&.front {
@@ -108,15 +112,14 @@ input[type=text] {
 		  @include disable-selection;
 		}
 
-		.card-text::after {
+		.card-footer {
 		  content: "Cards Against Quarantine";
 		  display: block;
-		  position: absolute;
-		  font: 9px * $cardScale $font;
+		  position: relative;
+		  font: 10px * $cardScale $font;
 		  font-weight: 700;
 		  padding-bottom: 28px * $cardScale;
-		  padding-left: 22px * $cardScale;
-		  bottom: 4px;
+		  padding-left: 48px * $cardScale;
 		}
 
 		.special {
@@ -270,39 +273,6 @@ input[type=text] {
 			font-size: 1.02em;
 		}
 
-		&#select-winner {
-			top: calc(90% - #{$cardHeight * $cardScale});
-
-			@media only screen and (max-height: 880px) {
-				top: calc(90% - #{$cardHeight * $cardScale} + 7px);
-			}
-
-			@media only screen and (max-width: 1450px) and (min-width: $firstTransitionWidth) {
-				margin: 4px;
-				left: 26.5%;
-				top: calc(90% - #{$cardHeight * $cardScale} - 80px);
-
-				@media only screen and (min-height: 750px) {
-					top: calc(90% - #{$cardHeight * $cardScale} - 100px);
-				}
-
-				@media only screen and (max-height: 720px) {
-					top: calc(90% - #{$cardHeight * $cardScale} - 35px);
-				}
-
-				@media only screen and (min-height: 850px) {
-					top: calc(90% - #{$cardHeight * $cardScale} - 140px);
-				}
-
-				&:hover {
-					margin: 0;
-				}
-			}
-			
-			@media only screen and (max-width: $firstTransitionWidth) {
-			}
-		}
-
 		&#central-action {
 			top: calc(90% - #{$cardHeight * $cardScale} - 22px);
 
@@ -317,173 +287,161 @@ input[type=text] {
 		}
 	}
 
-	#response-cards {
+	#center-cards {
 		position: absolute;
+		top: 12%;
+		left: 25%;
+		width: 50%;
+		height: calc(75% - #{$cardHeight * $cardScale});
 		display: flex;
-		left: 50%;
-		transform: translateX(-50%);
-		top: calc(35% - #{$cardHeight * $cardScale / 2 - 180px});
-		transition: $resizeTransition;
 		justify-content: center;
-		width: 100%;
 		align-items: center;
-
-		.card {
-			margin: 10px;
-			transition: none;
-
-
-			&.selected-card {
-				border: 2px solid $contrastColor;
-				margin: 9px;
-			}
-
-			.card-text::after {
-				bottom: 112px;
-
-				@media only screen and (min-width: 1451px) {
-					bottom: 3px;
-				}
-				@media only screen and (min-width: 1551px) {
-					bottom: 8px;
-				}
-			}
-
-			&:hover {
-				margin: 9px;
-			}
-		}
-
-		@media only screen and (max-height: 850px) {
-			top: calc(35% - #{$cardHeight * $cardScale / 2 - 150px});
-		}
-
-		@media only screen and (max-height: 800px) {
-			top: calc(35% - #{$cardHeight * $cardScale / 2 - 130px});
-		}
-
-		@media only screen and (max-width: 1550px) {
-			.card {
-				margin: 5px;
-
-				&:hover {
-					margin: 4px;
-				}
-
-				&.selected-card {
-					margin: 4px;
-				}
-			}
-		}
-
-		@media only screen and (max-width: 1450px) {
-			top: calc(35% - #{$cardHeight * $cardScale / 2 + 80px});
-			flex-wrap: wrap;
-			width: $cardWidth * $cardScale * 3 + 40px;
-			height: $cardHeight * $cardScale * 2 + 40px;
-			margin: 0 auto;
-			left: 58%;
-		}
-
-		@media only screen and (max-width: $firstTransitionWidth) {
-			transform: none;
-			left: auto;
-			right: 23%;
-			top: auto;
-			bottom: calc(50% - #{$cardHeight * $cardScale / 2} - 12px);
-		}
-
-		@media only screen and (max-width: 1450px) {
-			&.more-than-three {
-				.card {
-					.card-text::after {
-						bottom: 217px;
-					}
-
-					&:nth-child(1n+4) .card-text::after{
-						bottom: 8px;
-					}
-				}
-			}
-		}
-	}
-
-	#cur-black-card {
-		position: absolute;
-		left: calc(50% - #{$cardWidth * $cardScale / 2});
-		top: calc(35% - #{$cardHeight * $cardScale / 2 + 10px});
+		flex-direction: column;
 		transition: $resizeTransition;
-		transform: scale(1.5);
-
-		.card-text::after {
-			bottom: 0;
-		}
 
 		@media only screen and (max-width: $firstTransitionWidth) {
-			top: calc(45% - #{$cardHeight * $cardScale + 10px});
+			left: 22%;
+			width: 56%;
 		}
 
-		@media only screen and (max-height: 650px) {
-			transform: scale(1.25);
+		@media only screen and (max-width: $handWidth + 70px) {
+			left: 27%;
+			width: 73%;
+		}
+
+		@media only screen and (max-width: $secondTransitionWidth) {
+			width: 100%;
+			left: 0;
+		}
+
+		#cur-black-card {
+			transition: $resizeTransition;
+		};
+
+		&:not(.responses-shown) {
+			#cur-black-card {
+				transform: scale(1.5);
+
+				@media only screen and (max-height: 650px) {
+					transform: scale(1.25);
+				}
+
+				@media only screen and (max-height: 580px) {
+					transform: scale(1.1);
+				}
+			}
 		}
 
 		&.winner-shown {
-			display: flex;
-			left: 0;
-			width: 100%;
-			justify-content: center;
-			top: calc(45% - #{$cardHeight * $cardScale - 15px});
+			#cur-black-card {
+				display: flex;
+				flex-direction: row;
 
-			.card {
-				margin: 10px;
+				.card {
+					margin: 5px;
 
-				.card-text::after {
-					bottom: 10px;
+					&:hover {
+						border: 1px solid black;
+					}
 				}
 
-				&.white:hover {
-					border: 1px solid black;
+				@media only screen and (max-width: 440px) {
+					transform: scale(1.1);
 				}
 			}
 		}
 
 		&.responses-shown {
-			top: calc(35% - #{$cardHeight * $cardScale / 2 + 60px});
-
-			transform: scale(1.25);
-
-			@media only screen and (max-height: 850px) {
-				top: calc(35% - #{$cardHeight * $cardScale / 2 + 80px});
+			#cur-black-card {
+				transform: scale(1.2);
+				margin: 15px;
 			}
 
-			@media only screen and (max-height: 800px) {
-				transform: scale(1.15);
-			}
+			@media only screen and (min-height: 810px) {
+				#response-cards {
+					display: flex;
+					margin: 15px;
 
-			@media only screen and (max-width: 1450px) and (min-width: $firstTransitionWidth) {
-				transform: scale(1.25);
-				left: 28.5%;
-				&.czar-mode {
-					top: calc(35% - #{$cardHeight * $cardScale / 2 - 10px});
+					.card {
+						margin: 1px 5px;
+
+						&:hover {
+							margin: 0 4px;
+						}
+
+						&.selected-card {
+							border: 2px solid $contrastColor;
+							margin: 0 4px;
+						}
+					}
 				}
-				&:not(.czar-mode) {
-					top: calc(35% - #{$cardHeight * $cardScale / 2 - 37px});
+			}
+			@media only screen and (max-height: 809px) {
+				flex-direction: row;
+
+				#cur-black-card {
+					margin-left: 40px;
+				}
+
+				#response-cards {
+					display: flex;
+					flex-wrap: wrap;
+					margin: 30px;
+					justify-content: center;
+					max-height: 100%;
+					overflow-y: auto;
+
+					.card {
+						margin: 5px;
+
+						&:hover {
+							margin: 4px;
+						}
+
+						&.selected-card {
+							border: 2px solid $contrastColor;
+							margin: 4px;
+						}
+					}
+				}
+
+				@media only screen and (max-width: 480px) {
+					#cur-black-card {
+						margin: 0 0 0 10px;
+						transform: none;
+					}
+
+					#response-cards {
+						width: $cardWidth;
+						margin: 0;
+
+						.card {
+							flex: 0 0 auto;
+						}
+					}
 				}
 			}
 
-			@media only screen and (max-width: $firstTransitionWidth) {
-				transform: scale(1.5);
-				left: 27%;
-				top: calc(35% - #{$cardHeight * $cardScale / 2 - 25px});
+			@media only screen and (min-width: $secondTransitionWidth + 1px) {
+				#select-winner {
+					position: absolute;
+					z-index: 5;
+					top: auto;
+					bottom: -50px;
+
+					&:hover {
+						bottom: -48px;
+					}
+				}
 			}
 
-			@media only screen and (max-width: 1230px) {
-				transform: scale(1.25);
-				left: 25.5%;
-			}
-
-			@media only screen and (max-height: 700px) and (max-width: 1450px) {
-				top: calc(35% - #{$cardHeight * $cardScale / 2} + 10px);
+			@media only screen and (max-width: $secondTransitionWidth) {
+				#select-winner {
+					position: absolute;
+					left: 50%;
+					top: -50px;
+					transform: translateX(-50%);
+				}
 			}
 		}
 	}
@@ -603,13 +561,6 @@ input[type=text] {
 				flex: 0 0 auto;
 				margin: 0 $cardSpacing;
 
-				@media only screen and (max-width: $handWidth + 70px) {
-					.card-text::after {
-						// TODO: caq text on scrollable hand
-						display: none;
-					}
-				}
-
 				&:hover {
 					margin: 0 ($cardSpacing - 1px);
 				}
@@ -647,7 +598,7 @@ input[type=text] {
 		}
 
 		// TODO: better layout on small screens
-		@media only screen and (max-width: 800px) {
+		@media only screen and (max-width: $secondTransitionWidth) {
 			display: none;
 		}
 
@@ -776,6 +727,10 @@ input[type=text] {
 			@media only screen and (max-width: $firstTransitionWidth) {
 				right: 0;
 				border-right: 0;
+			}
+
+			@media only screen and (max-width: $handWidth + 70px) {
+				display: none;
 			}
 
 			#chat-header {

@@ -42,6 +42,7 @@ let recyclingCards = false;
 const setupSpinner = $("#setup-spinner") as JQuery;
 const chatHistory = $("#chat-history") as JQuery;
 const chatInput = $("#chat-input") as JQuery;
+const centerCards = $("#center-cards") as JQuery;
 const curBlackCard = $("#cur-black-card") as JQuery;
 const centralAction = $("#central-action") as JQuery;
 
@@ -66,7 +67,7 @@ function resetRoomMenu() {
 }
 
 function clearResponseCards() {
-  curBlackCard.removeClass("responses-shown").removeClass("czar-mode");
+  centerCards.removeClass("responses-shown").removeClass("czar-mode");
   $("#select-winner").hide();
   $("#response-cards").empty();
   $("#response-cards").removeClass("more-than-three");
@@ -87,7 +88,7 @@ function startChoosing() {
 
 function setWinner(card: Card) {
   clearResponseCards();
-  curBlackCard.addClass("winner-shown");
+  centerCards.addClass("winner-shown");
   appendCard(card, curBlackCard);
 }
 
@@ -531,7 +532,7 @@ socket.on("init", (data: any) => {
       if (room.curPrompt) setBlackCard(room.curPrompt);
 
       if (room.state === RoomState.readingCards && response.responsesCount > 0) {
-        curBlackCard.addClass("responses-shown");
+        centerCards.addClass("responses-shown");
         if (response.responsesCount > 3) $("#response-cards").addClass("more-than-three");
 
         for (let i = 0; i < response.responsesCount; i++) {
@@ -841,14 +842,22 @@ socket.on("startReadingAnswers", (data: any) => {
     if (roomUser.state === UserState.choosing) setUserState(roomUser.id, UserState.idle);
   }
 
-  curBlackCard.addClass("responses-shown");
+  centerCards.addClass("responses-shown");
 
-  for (let i = 0; i < data.count; i++) {
+  let visibleResponses = data.count;
+  if (visibleResponses > 6) visibleResponses = 6;
+
+  for (let i = 0; i < visibleResponses; i++) {
     addResponseCard(i, isCzar);
   }
 
-  if (data.count > 3) {
+  if (visibleResponses > 3) {
     $("#response-cards").addClass("more-than-three");
+  }
+
+  if (data.count > 6) {
+    $("#response-controls").show();
+    $("#response-page-left").addClass("disabled");
   }
 });
 
@@ -856,6 +865,7 @@ socket.on("revealResponse", (data: any) => {
   let cardElement = $("#response-card-" + data.position);
   cardElement.removeClass("back").addClass("front");
   cardElement.children(".card-text").text(data.card.text);
+  cardElement.append(`<div class="card-footer">Cards Against Quarantine</div>`);
   cardElement.attr("id", "response-revealed-" + data.card.id);
 
   if (users[userId].state === UserState.czar) {
@@ -867,7 +877,7 @@ socket.on("revealResponse", (data: any) => {
       selectedCard = data.card.id;
 
       $("#select-winner").show();
-      curBlackCard.addClass("czar-mode");
+      centerCards.addClass("czar-mode");
       console.debug("Selecting response #" + data.card.id);
       socket.emit("selectResponse", {cardId: data.card.id}, (response: any) => {
         if (response.error) return console.warn("Failed to select response:", response.error);
@@ -922,7 +932,7 @@ socket.on("nextRound", (data: any) => {
   sortUserList();
 
   clearResponseCards();
-  curBlackCard.removeClass("winner-shown");
+  centerCards.removeClass("winner-shown");
 
   if (data.card) setBlackCard(data.card);
 });
@@ -967,7 +977,7 @@ function appendCard(card: Card, target: JQuery, isWhite=true, id?: string) {
       html += `"></div>`;
     }
   }
-  target.append(html + `<div class="card-text">${card.text}</div></div>`);
+  target.append(html + `<div class="card-text">${card.text}</div><div class="card-footer">Cards Against Quarantine</div></div>`);
 }
 
 // TODO: animate?
@@ -1004,14 +1014,17 @@ $("#hand").sortable({
 $("#game-wrapper").on("click",event => {
   if (!room) return;
 
-  if (!submittingCard && selectedCard && ($(event.target).is("#game-wrapper") || $(event.target).is("#hand") || $(event.target).is("#response-cards"))) {
+  if (!submittingCard && selectedCard && ($(event.target).is("#game-wrapper") ||
+      $(event.target).is("#hand") ||
+      $(event.target).is("#response-cards") ||
+      $(event.target).is(centerCards))) {
     $("#white-card-" + selectedCard).removeClass("selected-card");
     $("#response-revealed-" + selectedCard).removeClass("selected-card");
     selectedCard = null;
 
     if (room.state === RoomState.readingCards) {
       $("#select-winner").hide();
-      curBlackCard.removeClass("czar-mode");
+      centerCards.removeClass("czar-mode");
       socket.emit("selectResponse", {cardId: null}, (response: any) => {
         if (response.error) return console.warn("Failed to deselect card:", response.error);
       });

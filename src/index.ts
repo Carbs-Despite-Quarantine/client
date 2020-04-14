@@ -819,7 +819,9 @@ socket.on("answersReady", (data: any) => {
   if (!room) return console.warn("Received answersReady when not in a room");
   else if (users[userId].state !== UserState.czar) return console.warn("Received answersReady state despite not being czar");
   else if (room.state !== RoomState.choosingCards) return console.warn("Received answersReady when room was in state #" + room.state);
-  centralAction.show().text("Read Answers (" + data.count + "/" + data.maxResponses + ")");
+  if (data.count >= 2) {
+    centralAction.show().text("Read Answers (" + data.count + "/" + data.maxResponses + ")");
+  } else centralAction.hide();
 });
 
 socket.on("answersNotReady", () => {
@@ -827,6 +829,17 @@ socket.on("answersNotReady", () => {
   else if (users[userId].state !== UserState.czar) return console.warn("Received answersNotReady state despite not being czar");
   else if (room.state !== RoomState.choosingCards) return console.warn("Received answersNotReady when room was in state #" + room.state);
   centralAction.hide();
+});
+
+socket.on("skipPrompt", (data: any) => {
+  if (!room) return console.warn("Tried to skip prompt when not in a room");
+
+  if (data.newPrompt) {
+    room.curPrompt = data.newPrompt;
+    setBlackCard(data.newPrompt);
+
+    if (data.message) addMessage(data.message);
+  }
 });
 
 socket.on("startReadingAnswers", (data: any) => {
@@ -991,6 +1004,10 @@ function addCardsToDeck(newCards: Record<number, Card>) {
 function setBlackCard(blackCard: BlackCard) {
   curBlackCard.empty();
   appendCard(blackCard, curBlackCard, false);
+
+  if (users[userId].state === UserState.czar) {
+    centralAction.show().text("Skip Card");
+  }
 }
 
 $("#hand").sortable({
@@ -1058,12 +1075,24 @@ centralAction.on("click", () => {
     return;
   }
 
-
   if (curState === UserState.czar) {
-    socket.emit("startReadingAnswers", {}, (response: any) => {
-      if (response.error) return console.warn("Failed to start reading answers:", response.error);
-      centralAction.hide();
-    });
+    let submittedResponses = 0;
+    for (const roomUserId in users) {
+      let roomUser = users[roomUserId];
+      if (roomUser.state === UserState.idle) submittedResponses++;
+    }
+    if (submittedResponses >= 2) {
+      // Start reading answers if two or more responses
+      socket.emit("startReadingAnswers", {}, (response: any) => {
+        if (response.error) return console.warn("Failed to start reading answers:", response.error);
+        centralAction.hide();
+      });
+    } else {
+      // Skip card if less than two responses
+      socket.emit("skipPrompt", {}, (response: any) => {
+        if (response.error) return console.warn("Failed to skip prompt:", response.error);
+      });
+    }
   } else if (curState === UserState.choosing) {
     submitCard();
   }

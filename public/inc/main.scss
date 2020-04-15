@@ -14,7 +14,8 @@ $secondTransitionWidth: 800px;
 $outlineColor: #9c9c9c;
 $contrastColor: #ffd200;
 $iconBackground: #ededed;
-$systemMsgColor: #636363;
+$lighterOutlineColor: #636363;
+$flairColor: #32a852;
 
 $resizeTransition: 0.2s ease;
 
@@ -48,7 +49,7 @@ body {
 	overflow: hidden;
 }
 
-input[type=text] {
+input[type=text], input[type=number] {
 	border: 0;
 	border-bottom: 3px solid black;
 	font-family: $font;
@@ -196,7 +197,7 @@ input[type=text] {
 	}
 }
 
-.room-link {
+.icon-link {
 	display: block;
 	margin: 2px 2px;
 	color: black;
@@ -204,7 +205,7 @@ input[type=text] {
 	font-size: 20px;
 
 	&:hover {
-		color: $systemMsgColor;
+		color: $lighterOutlineColor;
 		margin: 1px 1px;
 		font-size: 22px;
 	}
@@ -675,6 +676,15 @@ input[type=text] {
 					}
 				}
 
+				&.flared-user {
+					h2, p {
+						color: $flairColor;
+					}
+					.icon i {
+						color: $flairColor;
+					}
+				}
+
 				@media screen and (max-width: 800px) {
 					.msg-icon {
 						display: none;
@@ -682,6 +692,48 @@ input[type=text] {
 
 					.msg-content {
 						width: 100%;
+					}
+				}
+			}
+		}
+
+		.sidebar-header {
+			.icon-link {
+				float: right;
+			}
+
+			.link-copy-notification {
+				top: -45px;
+				right: -10px;
+
+				&:before,
+				&:after {
+					bottom: -10px;
+					right: 20px;
+				}
+				&:before {
+					bottom:-12px;
+				}
+
+				@media only screen and (max-width: $firstTransitionWidth) {
+					top: 5px;
+					right: 45px;
+					padding: 7px;
+					border-radius: 0;
+
+					&:before,
+					&:after {
+						top: 8px;
+						right: -6px;
+						bottom: auto;
+						border: solid 8px transparent;
+						border-right: 0;
+						border-left-color: white;
+					}
+
+					&:before {
+						right: -10px;
+						border-left-color: $outlineColor;
 					}
 				}
 			}
@@ -728,48 +780,6 @@ input[type=text] {
 				display: none;
 			}
 
-			#chat-header {
-				#link-on-chat {
-					float: right;
-				}
-
-				.link-copy-notification {
-					top: -45px;
-					right: -10px;
-
-					&:before,
-					&:after {
-					    bottom: -10px;
-					    right: 20px;
-					}
-					&:before {
-					    bottom:-12px;
-					}
-
-					@media only screen and (max-width: $firstTransitionWidth) {
-						top: 5px;
-						right: 45px;
-						padding: 7px;
-						border-radius: 0;
-
-						&:before,
-						&:after {
-								top: 8px;
-								right: -6px;
-						    bottom: auto;
-						    border: solid 8px transparent;
-						    border-right: 0;
-						    border-left-color: white;
-						}
-
-						&:before {
-							right: -10px;
-					    border-left-color: $outlineColor;
-						}
-					}
-				}
-			}
-
 			#chat-history {
 				bottom: 30px;
 
@@ -781,7 +791,7 @@ input[type=text] {
 					&.system-msg .msg-content {
 						h2, p {
 							font-style: italic;
-							color: $systemMsgColor;
+							opacity: 70%;
 						}
 					}
 
@@ -873,7 +883,7 @@ input[type=text] {
 			outline-y: none;
 		}
 
-		input[type=text] {
+		input[type=text], input[type=number] {
 			width: 250px;
 			border-bottom-width: 4px;
 			font-size: 20px;
@@ -999,7 +1009,7 @@ input[type=text] {
 		}
 	}
 
-	#room-setup-window {
+	.room-settings-window {
 		$userOverlayWidth: 800px;
 
 		width: $userOverlayWidth;
@@ -1012,7 +1022,7 @@ input[type=text] {
 			border-radius: 0;
 		}
 
-		#room-settings {
+		.room-settings-panel {
 			max-height: 800px;
 			transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
 
@@ -1026,17 +1036,17 @@ input[type=text] {
 				transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
 
 				&::-webkit-scrollbar {
-				  width: 4px;
+					width: 4px;
 				}
 
 				&::-webkit-scrollbar-thumb {
-				  border-radius: 0px;
-				  background-color: $contrastColor;
+					border-radius: 0px;
+					background-color: $contrastColor;
 				}
 
 				&::-webkit-scrollbar-track {
-				  border-radius: 0px;
-				  background-color: $outlineColor;
+					border-radius: 0px;
+					background-color: $outlineColor;
 				}
 			}
 
@@ -1062,7 +1072,7 @@ input[type=text] {
 					font-family: $font;
 					font-weight: 700;
 					padding: 8px 12px;
-					width: 60%;
+					width: 50%;
 					max-width: 100%;
 					box-sizing: border-box;
 					border: 3px solid $iconBackground;
@@ -1093,7 +1103,7 @@ input[type=text] {
 				}
 			}
 
-			#expansions-list {
+			.expansions-list {
 				display: flex;
 				flex-wrap: wrap;
 				justify-content: center;
@@ -1121,5 +1131,8 @@ input[type=text] {
 				}
 			}
 		}
+	}
+
+	#admin-settings-window {
 	}
 }

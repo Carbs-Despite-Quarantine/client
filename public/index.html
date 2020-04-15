@@ -27,15 +27,18 @@
 		</div>
 		<div id="central-action" class="action-button" style="display: none;"></div>
 		<div class="text-container" id="game-info-container">
-			<div id="game-info-header">
+			<div class="sidebar-header" id="game-info-header">
 				<h1>Players</h1>
+				<a class="icon-link" id="admin-settings-btn" title="Room Settings" style="display: none;">
+					<i class="fas fa-wrench"></i>
+				</a>
 			</div>
 			<div id="user-list" class="icon-list"></div>
 		</div>
 		<div class="text-container" id="chat-container">
-			<div id="chat-header">
+			<div class="sidebar-header" id="chat-header">
 				<h1>Chat</h1>
-				<a class="room-link" id="link-on-chat" title="Copy Room Link">
+				<a class="icon-link room-link" id="link-on-chat" title="Copy Room Link">
 					<i class="fas fa-link"></i>
 				</a>
 			</div>
@@ -69,7 +72,7 @@
 				<div id="room-link-window" hidden>
 					<div id="room-link-box-container">
 						<div id="room-link-box">
-							<a class="room-link" id="link-on-window" title="Copy Link">
+							<a class="icon-link room-link" id="link-on-window" title="Copy Link">
 								<i class="fas fa-link"></i>
 							</a>
 							<span id="room-link-box-text"></span>
@@ -79,8 +82,8 @@
 				</div>
 			</div>
 		</div>
-		<div class="overlay-window" id="room-setup-window" hidden>
-			<div id="room-settings">
+		<div class="overlay-window room-settings-window" id="room-setup-window" hidden>
+			<div class="room-settings-panel" id="room-settings">
 				<h1>Room Setup</h1>
 				<p>Adjust these settings to fine-tune your game.</p>
 				<h2>General</h2>
@@ -97,9 +100,24 @@
 					</select>
 				</div>
 				<h2>Expansions</h2>
-				<div id="expansions-list"></div>
+				<div class="expansions-list" id="initial-expansions-list"></div>
 				<br />
 				<button id="start-game">Start Game</button>
+			</div>
+		</div>
+		<div class="overlay-window room-settings-window" id="admin-settings-window" hidden>
+			<div class="room-settings-panel" id="admin-settings-panel">
+				<h1>Room Settings</h1>
+				<p>Debug and adjust rooms mid-game.</p>
+				<h2>General</h2>
+				<div class="room-option-dropdown">
+					<label class="select-label">User Flair</label>
+					<select id="select-flair-user" required></select>
+				</div>
+				<h2>Expansions</h2>
+				<div class="expansions-list" id="admin-expansions-list"></div>
+				<br />
+				<button id="apply-admin-settings">Apply</button>
 			</div>
 		</div>
 	</div>

@@ -10,14 +10,16 @@ export enum UserState {
 
 export class User {
   id: number;
+  admin: boolean;
   state: UserState;
 
   icon: string | undefined;
   name: string | undefined;
   score: number;
 
-  constructor(id: number, state: UserState, icon: string | undefined, name: string | undefined, score: number) {
+  constructor(id: number, admin: boolean, state: UserState, icon: string | undefined, name: string | undefined, score: number) {
     this.id = id;
+    this.admin = admin;
     this.state = state;
     this.icon = icon;
     this.name = name;

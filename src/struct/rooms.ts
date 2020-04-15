@@ -14,6 +14,7 @@ export class Room {
 
   link: string | undefined;
 
+  flaredUser: number | undefined;
   edition: string | undefined;
   rotateCzar: boolean | undefined;
   curPrompt: BlackCard | undefined;
@@ -21,21 +22,10 @@ export class Room {
 
   messages: Record<number, Message> = {};
 
-  constructor(id: number, token: string, state?: RoomState,
-              edition?: string, rotateCzar?: boolean,
-              curPrompt?: BlackCard, selectedResponse?: number) {
+  constructor(id: number, token: string) {
     this.id = id;
     this.token = token;
-
-    if (state && state != RoomState.new) {
-      this.state = state;
-      this.edition = edition;
-      this.rotateCzar = rotateCzar;
-      this.curPrompt = curPrompt;
-      this.selectedResponse = selectedResponse;
-    } else {
-      this.state = RoomState.new;
-    }
+    this.state = RoomState.new;
   }
 }
 

@@ -2,9 +2,12 @@ import io from "socket.io-client";
 import $ from "jquery";
 import 'jquery-ui/ui/widgets/sortable';
 
+import * as helpers from "./client-helpers";
+
 import {User, UserState} from "./struct/users";
 import {Message, Room, RoomState} from "./struct/rooms";
 import {BlackCard, Card} from "./struct/cards";
+import {getURLParam} from "./client-helpers";
 
 /********************
  * Global Variables *
@@ -20,7 +23,8 @@ let roomId: number | null = null;
 let users: Record<number, User> = {};
 let room: Room | null = null;
 
-let cards = {};
+// Used for the admin settings panel
+let packs: Record<string, { id: string, name: string, enabled: boolean }> = {};
 
 // Used to hide the "Link Copied" notification after a few seconds
 let copyLinkPersitTimer: number | null = null;
@@ -38,8 +42,17 @@ let submittingCard = false;
 // Set to true while waiting for a response from recycleHand
 let recyclingCards = false;
 
+// Set to true while the admin settings window is visible
+let adminSettingsOpen = false;
+
 // jQuery element cache
 const setupSpinner = $("#setup-spinner") as JQuery;
+const overlayContainer = $("#overlay-container") as JQuery;
+
+const adminSettingsBtn = $("#admin-settings-btn") as JQuery;
+const adminSettingsWindow = $("#admin-settings-window") as JQuery;
+const flairUserDropdown = $("#select-flair-user") as JQuery;
+
 const chatHistory = $("#chat-history") as JQuery;
 const chatInput = $("#chat-input") as JQuery;
 const centerCards = $("#center-cards") as JQuery;
@@ -49,11 +62,6 @@ const centralAction = $("#central-action") as JQuery;
 /********************
  * Helper Functions *
  ********************/
-
-function getURLParam(name: string): string | null {
-  let results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-  return results && results[1] || null;
-}
 
 function resetRoomMenu() {
   $("#select-icon").show();
@@ -227,14 +235,17 @@ function removeLike(msgId: number, userId: number) {
 
 function addMessage(message: Message, addToRoom=true) {
   if (!room) return console.warn("Tried to add a message when not in a room!");
+  if (!users.hasOwnProperty(message.userId)) return console.warn("Tried to add a message from unknown user #" + message.userId);
+
+  let user = users[message.userId];
 
   $("#chat-history").append(`
-    <div class="icon-container msg-container ${message.isSystemMsg ? "system-msg" : "user-msg"}" id="msg-${message.id}">
+    <div class="icon-container msg-container ${message.isSystemMsg ? "system-msg" : "user-msg"} ${room.flaredUser === message.userId ? "flared-user" : ""}" id="msg-${message.id}">
       <div class="icon msg-icon">
-        <i class="fas fa-${users[message.userId].icon}"></i>
+        <i class="fas fa-${user.icon}"></i>
       </div>
       <div class="content msg-content">
-        <h2>${users[message.userId].name}</h2>
+        <h2>${user.name}</h2>
         <p>${message.content}</p>
       </div>
     </div>
@@ -262,6 +273,20 @@ function populateChat(messages: Record<number, Message>) {
   }
 }
 
+function applyAdminSettings() {
+  let flairUserId = $("#select-flair-user").val();
+  if (flairUserId) {
+    socket.emit("applyFlair", {
+      userId: flairUserId === "none" ? undefined : parseInt(flairUserId as string)
+    }, (response: any) => {
+      if (response.error) console.warn("Failed to apply flair to user #" + flairUserId + ":", response.error);
+    })
+  }
+
+  overlayContainer.hide();
+  adminSettingsOpen = false;
+}
+
 /*************
  * User List *
  *************/
@@ -283,9 +308,9 @@ function getStateString(state: UserState): string {
   }
 }
 
-function addUser(user: User) {
+function addUser(user: User, flair = false) {
   $("#user-list").append(`
-    <div class="icon-container user-display" id="user-${user.id}">
+    <div class="icon-container user-display${flair ? " flared-user" : ""}" id="user-${user.id}">
       <div class="icon user-icon">
         <i class="fas fa-${user.icon}"></i>
       </div>
@@ -301,6 +326,7 @@ function addUser(user: User) {
 }
 
 function sortUserList() {
+  if (!room) return;
   $("#user-list").empty();
 
   let activeUsers: Array<User> = [];
@@ -309,7 +335,8 @@ function sortUserList() {
   for (const roomUserId in users) {
     let roomUser = users[roomUserId];
 
-    if (roomUser.state === UserState.inactive) inactiveUsers.push(roomUser);
+    if (roomUser.id === room.flaredUser) addUser(roomUser, true);
+    else if (roomUser.state === UserState.inactive) inactiveUsers.push(roomUser);
     else activeUsers.push(roomUser);
   }
 
@@ -339,15 +366,17 @@ function setUserScore(userId: number, score: number) {
  * Expansion Selector *
  **********************/
 
-function addExpansionSelector(id: string, name: string) {
-    $("#expansions-list").append(`
-    <div class="expansion" id="expansion-${id}">
+function addExpansionSelector(id: string, name: string, selected = false, forAdminPanel = false) {
+  $(forAdminPanel ? "#admin-expansions-list" : "#initial-expansions-list").append(`
+    <div class="expansion${selected ? " selected" : ""}" id="expansion-${id}">
       <span class="expansion-name">${name}</span>
       </div>
   `);
+
+  if (selected) expansionsSelected.push(id);
   
   // Clicking an expansion will toggle it
-  $("#expansion-" + id).click(event => {
+  $("#expansion-" + id).on("click", event => {
     let target = $("#expansion-" + id);
     if (target.hasClass("selected")) {
       target.removeClass("selected");
@@ -490,15 +519,16 @@ socket.on("init", (data: any) => {
   console.debug("Obtained userId " + data.userId + " and token " + data.userToken);
   userId = data.userId;
   userToken = data.userToken;
-  let roomIdStr = getURLParam("room");
-  let roomToken: string | null= null;
 
-  if (roomIdStr) {
+  let roomIdStr = getURLParam("room");
+  let roomToken = getURLParam("token");
+  let adminToken = getURLParam("adminToken") || undefined;
+
+  if (roomIdStr && roomToken) {
     roomId = parseInt(roomIdStr);
-    roomToken = getURLParam("token");
   }
 
-  users[userId] = new User(userId, UserState.idle,undefined, undefined,0);
+  users[userId] = new User(userId, false, UserState.idle,undefined, undefined,0);
 
   if (roomId) {
     console.debug("Trying to join room #" + roomId + " with token #" + roomToken);
@@ -506,7 +536,8 @@ socket.on("init", (data: any) => {
 
     socket.emit("joinRoom", {
       roomId: roomId,
-      token: roomToken
+      token: roomToken,
+      adminToken: adminToken
     }, (response: any) => {
       if (response.error) {
         console.warn("Failed to join room #" + roomId + ":", response.error);
@@ -543,6 +574,11 @@ socket.on("init", (data: any) => {
         if (room.selectedResponse) $("#response-revealed-" + room.selectedResponse).addClass("selected-card");
       } else if (room.state === RoomState.viewingWinner && response.winningCard) {
         setWinner(response.winningCard);
+      }
+
+      if (adminToken) {
+        adminSettingsBtn.show();
+        packs = response.packs;
       }
 
       setupSpinner.hide();
@@ -594,6 +630,18 @@ window.addEventListener("beforeunload", (event) => {
   socket.emit("userLeft");
 });
 
+socket.on("applyFlair", (data: any) => {
+  if (!room) return console.warn("Received flair update when not in a room");
+
+  if (data.userId === room.flaredUser) return;
+
+  room.flaredUser = data.userId;
+  sortUserList();
+
+  $("#chat-history").empty();
+  populateChat(room.messages);
+});
+
 /**************
  * Room Setup *
  **************/
@@ -632,7 +680,7 @@ $("#set-username").submit(event => {
       console.debug("Entered room #" + room.id);
       addCardsToDeck(response.hand);
 
-      $("#overlay-container").hide();
+      overlayContainer.hide();
 
       user.name = userName as string;
       user.state = response.state;
@@ -686,7 +734,7 @@ $("#set-username").submit(event => {
   }
 });
 
-$("#start-game").click(() => {
+$("#start-game").on("click", () => {
   if (!room) return console.error("Attempted to start game without a room ID");
 
   console.debug("Starting game...");
@@ -716,6 +764,8 @@ $("#start-game").click(() => {
       return console.warn("Failed to setup room:", response.error);
     }
 
+    $("#initial-expansions-list").empty();
+
     startChoosing();
     addCardsToDeck(response.hand);
     setBlackCard(response.blackCard);
@@ -729,7 +779,7 @@ $("#start-game").click(() => {
 });
 
 $("#enter-room").on("click", () => {
-  $("#overlay-container").hide();
+  overlayContainer.hide();
 });
 
 // We can't use => since we need access to 'this'
@@ -765,7 +815,7 @@ $(".room-link").on("click", function() {
  * Chat System *
  ***************/
 
-$("#chat-input").keyup(event => {
+$("#chat-input").on("keyup", event => {
   event.stopPropagation();
 
   let content = chatInput.val();
@@ -786,7 +836,7 @@ $("#chat-input").keyup(event => {
   }
 });
 
-$(window).resize(event => {
+$(window).on("resize", event => {
   scrollMessages();
 });
 
@@ -1035,7 +1085,15 @@ $("#game-wrapper").on("click",event => {
       centralAction.hide();
     }
   }
-})
+});
+
+overlayContainer.on("click", event => {
+  if (!adminSettingsOpen) return;
+
+  if ($(event.target).is(overlayContainer)) {
+    applyAdminSettings();
+  }
+});
 
 function submitCard() {
   centralAction.hide();
@@ -1122,4 +1180,40 @@ $("#recycle-hand").on("click", () => {
     }
     if (response.message) addMessage(response.message);
   });
+});
+
+adminSettingsBtn.on("click", () => {
+  if (!room) return console.warn("Can't use admin settings when not in a room!");
+  if (!users[userId].admin) return console.warn("Only admins can access admin settings!");
+
+  // Ensure that only the admin settings window is visible
+  $("#room-setup-window").hide();
+  $("#user-setup-window").hide();
+  adminSettingsWindow.show();
+
+  // Repopulate user flair dropdown
+  flairUserDropdown.empty();
+  flairUserDropdown.append(`<option value="none">None</option>`);
+  for (const roomUserId in users) {
+    const roomUser = users[roomUserId];
+    if (!roomUser.name || roomUser.state === UserState.inactive) continue;
+    flairUserDropdown.append(`
+      <option value="${roomUser.id}" ${roomUser.id === room.flaredUser ? "selected" : ""}>${roomUser.name}</option>
+    `);
+  }
+
+  // Repopulate admin expansions list
+  expansionsSelected = [];
+  $("#admin-expansions-list").empty();
+  for (const packId in packs) {
+    const pack = packs[packId];
+    addExpansionSelector(pack.id, pack.name, pack.enabled, true);
+  }
+
+  overlayContainer.show();
+  adminSettingsOpen = true;
+});
+
+$("#apply-admin-settings").on("click", () => {
+  applyAdminSettings();
 });

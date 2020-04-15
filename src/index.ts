@@ -552,6 +552,7 @@ socket.on("init", (data: any) => {
 
       users = response.users;
       room = response.room;
+
       if (!room) return console.warn("Recieved invalid room");
 
       room.link = window.location.href;

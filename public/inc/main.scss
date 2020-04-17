@@ -97,14 +97,6 @@ input[type=text], input[type=number] {
 	  background-repeat: no-repeat;
 	  background-position: 16px * $cardScale 333px * $cardScale;
 
-	  &.black {
-		  background-image: url(cah-logo-black.svg);
-		}
-
-		&.white {
-		  background-image: url(cah-logo-white.svg);
-		}
-
 		.card-text {
 		  font: 24px * $cardScale $font;
 		  font-weight: 700;
@@ -115,6 +107,7 @@ input[type=text], input[type=number] {
 
 		.card-footer {
 			position: relative;
+			@include disable-selection;
 
 			.footer-text {
 				position: absolute;
@@ -158,6 +151,19 @@ input[type=text], input[type=number] {
 						color: white;
 					}
 				}
+			}
+		}
+
+		&.black {
+			background-image: url(cah-logo-black.svg);
+		}
+
+		&.white {
+			background-image: url(cah-logo-white.svg);
+
+			.card-footer .specials .special .special-number {
+				background-color: black;
+				color: white;
 			}
 		}
 	}
@@ -256,6 +262,7 @@ input[type=text], input[type=number] {
 		text-align: center;
 		transition: $resizeTransition;
 		font-weight: 700;
+		@include disable-selection;
 
 		&:hover {
 			margin: 0 auto;
@@ -326,6 +333,8 @@ input[type=text], input[type=number] {
 			#cur-black-card {
 				display: flex;
 				flex-direction: row;
+				flex-wrap: wrap;
+				justify-content: center;
 
 				.card {
 					margin: 5px;
@@ -333,6 +342,10 @@ input[type=text], input[type=number] {
 					&:hover {
 						border: 1px solid black;
 					}
+				}
+
+				@media only screen and (max-width: 1180px) {
+					transform: scale(1.25);
 				}
 
 				@media only screen and (max-width: 440px) {
@@ -384,9 +397,29 @@ input[type=text], input[type=number] {
 						margin: 4px;
 					}
 
-					&.selected-card {
+					&.no-hover {
+						margin: 5px;
+						border: solid 1px black;
+					}
+
+					&.selected-response {
 						border: 2px solid $contrastColor;
 						margin: 4px;
+					}
+				}
+
+				.response-group {
+					margin: 4px;
+					border: 3px solid $outlineColor;
+					border-radius: 18px;
+					background-color: $iconBackground;
+
+					&:hover:not(.no-hover) {
+						border: 3px solid black;
+					}
+
+					&.selected-group {
+						border: 3px solid $contrastColor !important;
 					}
 				}
 			}
@@ -428,6 +461,14 @@ input[type=text], input[type=number] {
 					transform: translateX(-50%);
 				}
 			}
+		}
+
+		.response-group {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+
+
 		}
 	}
 
@@ -553,6 +594,14 @@ input[type=text], input[type=number] {
 				&.selected-card {
 					border: 2px solid $contrastColor;
 					margin: 0 ($cardSpacing - 1px);
+
+					&.selected-second {
+						border-color: red;
+					}
+
+					&.selected-third {
+						border-color: green;
+					}
 				}
 			}
 		}

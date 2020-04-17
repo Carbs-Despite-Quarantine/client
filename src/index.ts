@@ -33,11 +33,14 @@ let copyLinkFadeTimer: number | null = null;
 // Used to track the expansions enabled in the room setup menu
 let expansionsSelected: Array<string> = [];
 
-// The ID of the currently selected white card
-let selectedCard: number | null = null;
+// Map between selection number (1-3) and card ID
+let selectedCards: { [pos: number]: number } = {};
+
+// The selected response group id
+let selectedGroup: number | null = null;
 
 // Set to true while waiting for a server response from selectCard
-let submittingCard = false;
+let submittingCards = false;
 
 // Set to true while waiting for a response from recycleHand
 let recyclingCards = false;
@@ -78,9 +81,6 @@ function clearResponseCards() {
   centerCards.removeClass("responses-shown").removeClass("czar-mode");
   $("#select-winner").hide();
   $("#response-cards").empty();
-  selectedCard = null;
-
-  $(".selected-card").removeClass("selected-card");
   centralAction.hide();
 }
 
@@ -93,10 +93,13 @@ function startChoosing() {
   if (room) room.state = RoomState.choosingCards;
 }
 
-function setWinner(card: Card) {
+function setWinner(winningCards: Record<number, Card>) {
   clearResponseCards();
   centerCards.addClass("winner-shown");
-  appendCard(card, curBlackCard);
+  const count = Object.keys(winningCards).length;
+
+  if (count === 1) appendCard(winningCards[0], curBlackCard);
+  else curBlackCard.append(getResponseGroupHTML(0, count, false, winningCards));
 }
 
 function scrollMessages() {
@@ -362,6 +365,13 @@ function setUserScore(userId: number, score: number) {
   $("#user-score-" + userId).text(score);
 }
 
+function clearSelectedCards() {
+  $(".selected-card").children(".card-footer").children(".specials").remove();
+  $(".selected-card").removeClass("selected-card");
+
+  selectedCards = {};
+}
+
 /**********************
  * Expansion Selector *
  **********************/
@@ -560,21 +570,31 @@ socket.on("init", (data: any) => {
       populateChat(room.messages);
       sortUserList();
 
-      if (room.curPrompt) setBlackCard(room.curPrompt);
+      if (room.curPrompt) {
+        setBlackCard(room.curPrompt);
 
-      if (room.state === RoomState.readingCards && response.responsesCount > 0) {
-        centerCards.addClass("responses-shown");
+        if (room.state === RoomState.readingCards && response.responsesCount > 0) {
+          centerCards.addClass("responses-shown");
 
-        for (let i = 0; i < response.responsesCount; i++) {
-          if (response.revealedResponses.hasOwnProperty(i)) {
-            const card = response.revealedResponses[i];
-            appendCard(card, $("#response-cards"), true, "response-revealed-" + card.id);
-          } else addResponseCard(i, false);
+          for (let groupId = 0; groupId < Object.keys(response.responseGroups).length; groupId++) {
+            const group = response.responseGroups[groupId];
+
+            if (room.curPrompt.pick === 1) {
+              let card = group[0];
+              if (card) appendCard(card, $("#response-cards"), true, "response-card-" + (card.group * room.curPrompt.pick) + card.num);
+              else addResponseGroup(groupId, 1, false);
+            } else {
+              // TODO: response groups!
+            }
+          }
+
+          if (room.selectedResponse) {
+            if (room.curPrompt.pick === 1) $("#response-card-" + room.selectedResponse).addClass("selected-response");
+            else $("#response-group" + room.selectedResponse).addClass("selected-group");
+          }
+        } else if (room.state === RoomState.viewingWinner && response.winningCards) {
+          setWinner(response.winningCards);
         }
-
-        if (room.selectedResponse) $("#response-revealed-" + room.selectedResponse).addClass("selected-card");
-      } else if (room.state === RoomState.viewingWinner && response.winningCard) {
-        setWinner(response.winningCard);
       }
 
       if (adminToken) {
@@ -886,6 +906,9 @@ socket.on("skipPrompt", (data: any) => {
   if (!room) return console.warn("Tried to skip prompt when not in a room");
 
   if (data.newPrompt) {
+    centralAction.hide();
+    clearSelectedCards();
+
     room.curPrompt = data.newPrompt;
     setBlackCard(data.newPrompt);
 
@@ -894,7 +917,7 @@ socket.on("skipPrompt", (data: any) => {
 });
 
 socket.on("startReadingAnswers", (data: any) => {
-  if (!room) return console.warn("Tried to start reading answers when not in a room");
+  if (!room || !room.curPrompt) return console.warn("Tried to start reading answers when not in a room");
 
   room.state = RoomState.readingCards;
   let isCzar = users[userId].state === UserState.czar;
@@ -905,40 +928,56 @@ socket.on("startReadingAnswers", (data: any) => {
   }
 
   centerCards.addClass("responses-shown");
+  const responseSize = room.curPrompt.pick;
 
-  for (let i = 0; i < data.count; i++) {
-    addResponseCard(i, isCzar);
+  for (let i = 0; i < data.groups; i++) {
+    if (responseSize === 1) addResponseCard(i, isCzar);
+    else addResponseGroup(i, responseSize, isCzar);
   }
 });
 
 socket.on("revealResponse", (data: any) => {
-  let cardElement = $("#response-card-" + data.position);
+  if (!room || !room.curPrompt) return console.warn("Tried to reveal a response without a room/prompt");
+
+  let cardElement = $("#response-card-" + ((data.group * room.curPrompt.pick) + data.num));
   cardElement.removeClass("back").addClass("front");
   cardElement.children(".card-text").text(data.card.text);
   cardElement.append(`<div class="card-footer"><div class="footer-text">Cards Against Quarantine</div></div>`);
-  cardElement.attr("id", "response-revealed-" + data.card.id);
 
   if (users[userId].state === UserState.czar) {
-    $("#response-revealed-" + data.card.id).off("click").on("click", event => {
-      if (selectedCard) {
-        $("#response-revealed-" + selectedCard).removeClass("selected-card");
-      }
-      $("#response-revealed-" + data.card.id).addClass("selected-card");
-      selectedCard = data.card.id;
+    cardElement.addClass("no-hover");
+    cardElement.off("click");
 
-      $("#select-winner").show();
-      centerCards.addClass("czar-mode");
-      console.debug("Selecting response #" + data.card.id);
-      socket.emit("selectResponse", {cardId: data.card.id}, (response: any) => {
-        if (response.error) return console.warn("Failed to select response:", response.error);
+    // If there are multiple responses, selection is handled by the group
+    if (room.curPrompt.pick === 1) {
+      cardElement.on("click", () => {
+        socket.emit("selectResponseGroup", {group: data.group}, (response: any) => {
+          if (response.error) return console.warn("Failed to select response:", response.error);
+        });
       });
-    });
+    }
   }
 });
 
-socket.on("selectResponse", (data: any) => {
-  $(".selected-card").removeClass("selected-card");
-  if (data.cardId) $("#response-revealed-" + data.cardId).addClass("selected-card");
+socket.on("selectResponseGroup", (data: any) => {
+  if (!room || !room.curPrompt) return console.warn("Tried to select response group without valid room/prompt");
+
+  selectedGroup = data.group;
+
+  if (selectedGroup !== null && users[userId].state === UserState.czar) {
+    $("#select-winner").show();
+    centerCards.addClass("czar-mode");
+  }
+
+  console.debug("Selecting group", data.group);
+
+  if (room.curPrompt.pick === 1) {
+    $(".selected-response").removeClass("selected-response");
+    if (data.group !== null) $("#response-card-" + data.group).addClass("selected-response");
+  } else {
+    $(".selected-group").removeClass("selected-group");
+    if (data.group !== null) $("#response-group-" + data.group).addClass("selected-group");
+  }
 });
 
 socket.on("selectWinner", (data: any) => {
@@ -960,7 +999,7 @@ socket.on("selectWinner", (data: any) => {
 
   room.state = RoomState.viewingWinner;
 
-  setWinner(data.card);
+  setWinner(data.winningCards);
 
   // Show the 'next round' button if we are the next czar
   if (data.nextCzarId === userId) {
@@ -991,33 +1030,63 @@ socket.on("nextRound", (data: any) => {
  * Card Interaction *
  ********************/
 
-
-function appendCardBack(target: JQuery, id: string, isWhite=true) {
-  target.append(`
-    <div class="card ${isWhite ? "white" : "black"} back" id="${id}">
+function getCardBackHTML (id: string, isWhite = true, noHover = false): string {
+  return `
+    <div class="card ${isWhite ? "white" : "black"} back ${noHover ? "no-hover" : ""}" id="${id}">
       <div class="card-text">Cards Against Quarantine</div>
     </div>
-  `);
+  `;
+}
+
+function registerResponse(group: number, num: number, groupSize: number) {
+  $("#response-card-" + ((group * groupSize) + num)).on("click", () => {
+    socket.emit("revealResponse", {group: group, num: num}, (response: any) => {
+      if (response.error) return console.warn("Failed to reveal response #" + num + " from group #" + group + ":", response.error);
+    });
+  });
 }
 
 function addResponseCard(id: number, isCzar: boolean) {
-  appendCardBack($("#response-cards"), "response-card-" + id);
+  $("#response-cards").append(getCardBackHTML("response-card-" + id, true, !isCzar));
 
   // Only the czar can reveal answers
+  if (isCzar) registerResponse(id, 0, 1);
+}
+
+function getResponseGroupHTML(id: number, size: number, enableHover: boolean, cards?: Record<number, Card>): string {
+  let html = `<div class="response-group ${enableHover ? "" : "no-hover"}" id="response-group-${id}">`;
+  for (let card = 0; card < size; card++) {
+    const realId = (id * size + card);
+    if (cards && cards[card]) {
+      html += getCardHTML(cards[card], true, "response-card-" + realId, true);
+    } else {
+      html += getCardBackHTML("response-card-" + realId, true, !enableHover);
+    }
+  }
+  html += `</div>`;
+  return html;
+}
+
+function addResponseGroup(id: number, size: number, isCzar: boolean) {
+  $("#response-cards").append(getResponseGroupHTML(id, size, isCzar));
+
   if (isCzar) {
-    $("#response-card-" + id).on("click", event => {
-      socket.emit("revealResponse", {position: id}, (response: any) => {
-        if (response.error) return console.warn("Failed to reveal response #" + id + ":", response.error);
-      });
+    for (let card = 0; card < size; card++) registerResponse(id, card, size);
+    $("#response-group-" + id).on("click", () => {
+      console.debug("Selected response group #" + id);
+      socket.emit("selectResponseGroup", {group: id}, (response: any) => {
+        if (response.error) return console.warn("Failed to select response group #" + id + ":", response.error);
+      })
     });
   }
 }
 
-function appendCard(card: any, target: JQuery, isWhite=true, id?: string) {
+function getCardHTML(card: any, isWhite = true, id?: string, noHover = false) {
   let color = isWhite ? "white" : "black";
   if (!id) id = color + "-card-" + card.id;
+
   let html = `
-    <div class="card ${color} front" id="${id}">
+    <div class="card ${color} front ${noHover ? "no-hover" : ""}" id="${id}">
       <div class="card-text">${card.text}</div>
       <div class="card-footer">
         <div class="footer-text">Cards Against Quarantine</div>
@@ -1047,7 +1116,31 @@ function appendCard(card: any, target: JQuery, isWhite=true, id?: string) {
     html += `</div>`;
   }
 
-  target.append(html + `</div></div>`);
+  return html + `</div></div>`;
+}
+function appendCard(card: any, target: JQuery, isWhite=true, id?: string) {
+  target.append(getCardHTML(card, isWhite, id));
+}
+
+function selectFirstCard(cardId: number) {
+  clearSelectedCards();
+  selectedCards[0] = cardId;
+}
+
+function addSelectIndicator(cardElement: JQuery, num: number) {
+  const footer = cardElement.children(".card-footer");
+  const specials = footer.children(".specials");
+
+  // It's just easier to simply remove the existing specials div
+  if (specials.length > 0) specials.remove();
+
+  footer.append(`
+    <div class="specials">
+      <div class="special special-select">
+        <div class="special-number">${num}</div>
+      </div>
+    </div>
+  `);
 }
 
 // TODO: animate?
@@ -1055,13 +1148,54 @@ function addCardToDeck(card: Card) {
   appendCard(card, $("#hand"));
   let cardElement = $("#white-card-" + card.id);
   cardElement.on("click", () => {
-    if (users[userId].state !== UserState.choosing || submittingCard) return;
-    if (selectedCard) {
-      $("#white-card-" + selectedCard).removeClass("selected-card");
+    if (!room || !room.curPrompt) return;
+    if (users[userId].state !== UserState.choosing || submittingCards) return;
+
+    let pick = room.curPrompt.pick;
+    let picked = Object.keys(selectedCards).length;
+    let allowSubmit = false;
+
+    if (pick === 1) {
+      selectFirstCard(card.id);
+      allowSubmit = true;
+    } else if (pick === 2) {
+      if (picked === 0) {
+        selectFirstCard(card.id);
+        addSelectIndicator(cardElement, 1);
+      } else if (picked === 1) {
+        // Can't select the same card twice
+        if (selectedCards[0] === card.id) {
+          console.debug("reselect");
+          return;
+        } else {
+          selectedCards[1] = card.id;
+          addSelectIndicator(cardElement, 2);
+          allowSubmit = true;
+        }
+      } else if (picked > 1) {
+        let oldFirst = selectedCards[0];
+        let newFirst = selectedCards[1];
+
+        clearSelectedCards();
+
+        // Swap the order if one of the cards was already selected
+        if (newFirst === card.id) newFirst = oldFirst;
+
+        selectedCards[0] = newFirst;
+        selectedCards[1] = card.id;
+
+        const newFirstElement = $("#white-card-" + newFirst);
+        newFirstElement.addClass("selected-card");
+
+        addSelectIndicator(newFirstElement, 1);
+        addSelectIndicator(cardElement, 2);
+
+        allowSubmit = true;
+      }
     }
+
     cardElement.addClass("selected-card");
-    selectedCard = card.id;
-    centralAction.show().text("Submit Card");
+    if (allowSubmit) showSubmitBtn();
   });
 }
 
@@ -1073,12 +1207,21 @@ function addCardsToDeck(newCards: Record<number, Card>) {
 }
 
 function setBlackCard(blackCard: BlackCard) {
+  if (!room) return console.warn("Tried to set black card when not in a room!");
+
+  room.curPrompt = blackCard;
   curBlackCard.empty();
   appendCard(blackCard, curBlackCard, false);
 
   if (users[userId].state === UserState.czar) {
     centralAction.show().text("Skip Card");
   }
+}
+
+function showSubmitBtn() {
+  if (!room || !room.curPrompt) return;
+
+  centralAction.show().text("Submit Card" + (room.curPrompt.pick > 1 ? "s" : ""));
 }
 
 $("#hand").sortable({
@@ -1088,21 +1231,22 @@ $("#hand").sortable({
 $("#game-wrapper").on("click",event => {
   if (!room) return;
 
-  if (!submittingCard && selectedCard && ($(event.target).is("#game-wrapper") ||
+  if (!submittingCards && ($(event.target).is("#game-wrapper") ||
       $(event.target).is("#hand") ||
       $(event.target).is("#response-cards") ||
       $(event.target).is(centerCards))) {
-    $("#white-card-" + selectedCard).removeClass("selected-card");
-    $("#response-revealed-" + selectedCard).removeClass("selected-card");
-    selectedCard = null;
 
     if (room.state === RoomState.readingCards) {
-      $("#select-winner").hide();
-      centerCards.removeClass("czar-mode");
-      socket.emit("selectResponse", {cardId: null}, (response: any) => {
-        if (response.error) return console.warn("Failed to deselect card:", response.error);
-      });
-    } else {
+      // Technically an admin could do this too but it seems unnecessary
+      if (users[userId].state === UserState.czar) {
+        $("#select-winner").hide();
+        centerCards.removeClass("czar-mode");
+        socket.emit("selectResponseGroup", {group: null}, (response: any) => {
+          if (response.error) return console.warn("Failed to deselect card:", response.error);
+        });
+      }
+    } else if (Object.keys(selectedCards).length > 0) {
+      clearSelectedCards();
       centralAction.hide();
     }
   }
@@ -1116,23 +1260,28 @@ overlayContainer.on("click", event => {
   }
 });
 
-function submitCard() {
-  centralAction.hide();
-  if (selectedCard && !submittingCard) {
-    submittingCard = true;
-    let cardId = selectedCard;
-    socket.emit("submitCard", {
-      cardId: cardId
-    }, (response: any) => {
-      submittingCard = false;
-      if (response.error) {
-        console.warn("Failed to submit card #" + selectedCard + ":", response.error);
-        return centralAction.show().text("Submit Card");
-      }
-      selectedCard = null;
-      $("#white-card-" + cardId).remove();
+function submitCards() {
+  if (!room || !room.curPrompt) return;
 
-      if (response.newCard) addCardToDeck(response.newCard);
+  const submissionCards = Object.assign({}, selectedCards);
+
+  centralAction.hide();
+  if (Object.keys(selectedCards).length === room.curPrompt.pick && !submittingCards) {
+    submittingCards = true;
+    socket.emit("submitCards", {
+      cards: submissionCards
+    }, (response: any) => {
+      submittingCards = false;
+      if (response.error) {
+        console.warn("Failed to submit cards:", submissionCards, response.error);
+        return showSubmitBtn();
+      }
+
+      for (const pos in submissionCards) {
+        $("#white-card-" + submissionCards[pos]).remove();
+      }
+      clearSelectedCards();
+      if (response.newCards) addCardsToDeck(response.newCards);
       setUserState(userId, UserState.idle);
     });
   }
@@ -1173,14 +1322,14 @@ centralAction.on("click", () => {
       });
     }
   } else if (curState === UserState.choosing) {
-    submitCard();
+    submitCards();
   }
 });
 
 $("#select-winner").on("click", () => {
-  if (users[userId].state === UserState.czar && selectedCard) {
-    socket.emit("selectWinner", {cardId: selectedCard}, (response: any) => {
-      if (response.error) return console.warn("Failed to select winning card:", response.error);
+  if (users[userId].state === UserState.czar && selectedGroup) {
+    socket.emit("selectWinner", {group: selectedGroup}, (response: any) => {
+      if (response.error) return console.warn("Failed to select winning group:", response.error);
     })
   }
 });

@@ -16,9 +16,11 @@
   },
   "homepage": "https://github.com/Cards-Against-Quarantine/client#readme",
   "dependencies": {
+    "@fortawesome/fontawesome-pro": "^5.13.0",
     "@types/jquery": "^3.3.34",
     "@types/jqueryui": "^1.12.10",
     "@types/socket.io-client": "^1.4.32",
+    "copy-webpack-plugin": "^5.1.1",
     "jquery": "^3.4.1",
     "jquery-ui": "^1.12.1",
     "socket.io-client": "^2.3.0",

@@ -5,3 +5,4 @@ prepros.config
 public/inc/*.css
 public/inc/*.css.map
 public/inc/*.js
+public/inc/fa/

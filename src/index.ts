@@ -573,18 +573,23 @@ socket.on("init", (data: any) => {
       if (room.curPrompt) {
         setBlackCard(room.curPrompt);
 
-        if (room.state === RoomState.readingCards && response.responsesCount > 0) {
+        if (room.state === RoomState.readingCards && response.responseGroups) {
+          const responsesCount = Object.keys(response.responseGroups).length;
           centerCards.addClass("responses-shown");
 
-          for (let groupId = 0; groupId < Object.keys(response.responseGroups).length; groupId++) {
+          const responseCards = $("#response-cards") as JQuery;
+
+          console.debug("Adding response groups:", response.responseGroups);
+
+          for (let groupId = 0; groupId < responsesCount; groupId++) {
             const group = response.responseGroups[groupId];
 
             if (room.curPrompt.pick === 1) {
-              let card = group[0];
-              if (card) appendCard(card, $("#response-cards"), true, "response-card-" + (card.group * room.curPrompt.pick) + card.num);
-              else addResponseGroup(groupId, 1, false);
+              const card = group[0];
+              if (card) appendCard(card, responseCards, true, "response-card-" + groupId);
+              else responseCards.append(getCardBackHTML("response-card-" + groupId, true, true));
             } else {
-              // TODO: response groups!
+              responseCards.append(getResponseGroupHTML(groupId, Object.keys(group).length, false, group));
             }
           }
 
@@ -687,9 +692,8 @@ $("#set-username").submit(event => {
     socket.emit("enterRoom", {
       userName: userName
     }, (response: any) => {
-      // TODO: this is a bit dumb
-      room = room as Room;
 
+      room = room as Room;
       setupSpinner.hide();
 
       if (response.error) {
@@ -877,11 +881,6 @@ socket.on("unlikeMessage", (data: any) => {
  * Game *
  ********/
 
-// TODO: display aand allow czar to pick
-socket.on("cardChoices", (data: any) => {
-  console.debug("Card choices:", data);
-});
-
 socket.on("userState", (data: any) => {
   setUserState(data.userId, data.state);
 });
@@ -1039,7 +1038,10 @@ function getCardBackHTML (id: string, isWhite = true, noHover = false): string {
 }
 
 function registerResponse(group: number, num: number, groupSize: number) {
-  $("#response-card-" + ((group * groupSize) + num)).on("click", () => {
+  $("#response-card-" + ((group * groupSize) + num)).on("click", (event) => {
+    // Prevents the response group being selected if we are only revealing a response
+    event.stopPropagation();
+
     socket.emit("revealResponse", {group: group, num: num}, (response: any) => {
       if (response.error) return console.warn("Failed to reveal response #" + num + " from group #" + group + ":", response.error);
     });
@@ -1327,7 +1329,7 @@ centralAction.on("click", () => {
 });
 
 $("#select-winner").on("click", () => {
-  if (users[userId].state === UserState.czar && selectedGroup) {
+  if (users[userId].state === UserState.czar && selectedGroup !== null) {
     socket.emit("selectWinner", {group: selectedGroup}, (response: any) => {
       if (response.error) return console.warn("Failed to select winning group:", response.error);
     })

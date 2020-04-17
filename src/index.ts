@@ -915,7 +915,7 @@ socket.on("revealResponse", (data: any) => {
   let cardElement = $("#response-card-" + data.position);
   cardElement.removeClass("back").addClass("front");
   cardElement.children(".card-text").text(data.card.text);
-  cardElement.append(`<div class="card-footer">Cards Against Quarantine</div>`);
+  cardElement.append(`<div class="card-footer"><div class="footer-text">Cards Against Quarantine</div></div>`);
   cardElement.attr("id", "response-revealed-" + data.card.id);
 
   if (users[userId].state === UserState.czar) {
@@ -1013,21 +1013,41 @@ function addResponseCard(id: number, isCzar: boolean) {
   }
 }
 
-function appendCard(card: Card, target: JQuery, isWhite=true, id?: string) {
+function appendCard(card: any, target: JQuery, isWhite=true, id?: string) {
   let color = isWhite ? "white" : "black";
   if (!id) id = color + "-card-" + card.id;
-  let html = `<div class="card ${color} front" id="${id}">`;
-  if (card instanceof BlackCard) {
-    if (card.draw === 2) html += `<div class="special draw"></div>`;
+  let html = `
+    <div class="card ${color} front" id="${id}">
+      <div class="card-text">${card.text}</div>
+      <div class="card-footer">
+        <div class="footer-text">Cards Against Quarantine</div>
+  `;
 
-    let pick = card.pick;
-    if (pick > 1) {
-      html += `<div class="special pick`;
-      if (pick > 2) html += " pick-three";
-      html += `"></div>`;
+  if (card.pick) {
+    html += `<div class="specials">`;
+
+    if (card.draw > 0) {
+      html += `
+        <div class="special special-draw">
+          <div class="special-text">DRAW</div>
+          <div class="special-number">${card.draw}</div>
+        </div>
+      `;
     }
+
+    if (card.pick > 1) {
+      html += `
+      <div class="special special-pick">
+        <div class="special-text">PICK</div>
+        <div class="special-number">${card.pick}</div>
+      </div>
+    `;
+    }
+
+    html += `</div>`;
   }
-  target.append(html + `<div class="card-text">${card.text}</div><div class="card-footer">Cards Against Quarantine</div></div>`);
+
+  target.append(html + `</div></div>`);
 }
 
 // TODO: animate?

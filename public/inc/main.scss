@@ -114,61 +114,50 @@ input[type=text], input[type=number] {
 		}
 
 		.card-footer {
-		  content: "Cards Against Quarantine";
-		  display: block;
-		  position: relative;
-		  font: 10px * $cardScale $font;
-		  font-weight: 700;
-		  padding-bottom: 28px * $cardScale;
-		  padding-left: 48px * $cardScale;
-		}
+			position: relative;
 
-		.special {
-			&::before {
-				display: block;
+			.footer-text {
 				position: absolute;
-				font: 18px * $cardScale $font;
+				float: left;
+				bottom: 0;
+				font: 10px * $cardScale $font;
 				font-weight: 700;
-				color: white;
-				right: 52px * $cardScale;
+				padding-bottom: 28px * $cardScale;
+				padding-left: 45px * $cardScale;
 			}
 
-			&.pick::before {
-				content: "PICK";
-				bottom: 26px * $cardScale;
-			}
+			.specials {
+				float: right;
+				margin-right: 16px * $cardScale;
+				padding-bottom: 18px * $cardScale;
+				display: flex;
+				flex-direction: column;
+				align-items: flex-end;
 
-			&.draw::before {
-				content: "DRAW";
-				bottom: 58px * $cardScale;
-			}
+				.special {
+					display: flex;
+					margin: 2px 0;
 
-			&::after {
-				display: block;
-				position: absolute;
-				background-color: white;
-				height: 26px * $cardScale;
-				width: 26px * $cardScale;
-				color: black;
-				text-align: center;
-				border-radius: 15px * $cardScale;
-				font: 18px * $cardScale $font;
-				font-weight: 700;
-				line-height: 25px * $cardScale;
-				right: 22px * $cardScale;
-				content: "2";
-			}
+					.special-number {
+						background-color: white;
+						height: 26px * $cardScale;
+						width: 26px * $cardScale;
+						color: black;
+						text-align: center;
+						border-radius: 15px * $cardScale;
+						font: 18px * $cardScale $font;
+						font-weight: 700;
+						line-height: 25px * $cardScale;
+					}
 
-			&.pick::after {
-				bottom: 23px * $cardScale;
-			}
-
-			&.draw::after {
-				bottom: 55px * $cardScale;
-			}
-
-			&.pick.pick-three::after {	
-				content: "3";
+					.special-text {
+						margin-top: 1px;
+						margin-right: 3px;
+						font: 18px * $cardScale $font;
+						font-weight: 700;
+						color: white;
+					}
+				}
 			}
 		}
 	}

@@ -918,6 +918,9 @@ socket.on("skipPrompt", (data: any) => {
 socket.on("startReadingAnswers", (data: any) => {
   if (!room || !room.curPrompt) return console.warn("Tried to start reading answers when not in a room");
 
+  clearSelectedCards();
+  centralAction.hide();
+
   room.state = RoomState.readingCards;
   let isCzar = users[userId].state === UserState.czar;
 

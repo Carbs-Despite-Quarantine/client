@@ -13,7 +13,7 @@ import {getURLParam} from "./client-helpers";
  * Global Variables *
  ********************/
 
-const socket = io("http://localhost:3000");
+const socket = io("http://localhost:3000", {transports: ["websocket"]});
 
 let userId: number;
 let userToken: string | undefined;

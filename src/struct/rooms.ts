@@ -17,6 +17,7 @@ export class Room {
   flaredUser: number | undefined;
   edition: string | undefined;
   rotateCzar: boolean | undefined;
+  open: boolean | undefined;
   curPrompt: BlackCard | undefined;
   selectedResponse: number | undefined;
 

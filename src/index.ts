@@ -71,6 +71,7 @@ const hand = $("#hand");
  ********************/
 
 function resetRoomMenu() {
+  resetIconSelector();
   iconSelector.hide();
   joinOrCreateDialog.show();
   iconBackBtn.show();
@@ -419,6 +420,13 @@ let iconChoices: Array<string> = [];
 // The currently selected icon name
 let selectedIcon: string | null = null;
 
+function resetIconSelector() {
+  $(".icon.selected").removeClass("selected");
+  selectedIcon = null;
+
+  $("#set-icon").prop("disabled", true);
+}
+
 function setIcon() {
   if (!selectedIcon || !userId) return;
 
@@ -666,6 +674,7 @@ socket.on("roomSettings", (data: any) => {
   console.debug("Room has been set to " + data.edition + " edition!");
 
   room.edition = data.edition;
+  room.open = data.open;
   room.rotateCzar = data.rotateCzar;
   startChoosing();
 
@@ -722,7 +731,6 @@ $("#join-room-mode").on("click", () => {
     }
 
     let room = response.room;
-    console.debug(room);
     let link = window.location.href.split("?")[0] + "?room=" + room.id + "&token=" + room.token;
 
     roomId = room.id;
@@ -759,12 +767,11 @@ iconBackBtn.on("click", () => {
     // Clear chat
     chatHistory.empty();
 
-    resetRoomMenu();
-
     // Inform the server of leave
     socket.emit("leaveRoom");
   }
 
+  resetRoomMenu();
   iconSelector.hide();
   joinOrCreateDialog.show();
 });
@@ -869,11 +876,13 @@ $("#start-game").on("click", () => {
   title.show();
 
   let edition = $("#select-edition").val();
-  let rotateCzar = $("#select-czar").val() == "rotate";
+  let rotateCzar = $("#select-czar").val() === "rotate";
+  let open = $("#select-privacy").val() === "public";
 
   socket.emit("roomSettings", {
     edition: edition,
     rotateCzar: rotateCzar,
+    open: open,
     packs: expansionsSelected
   }, (response: any) => {
     setupSpinner.hide();

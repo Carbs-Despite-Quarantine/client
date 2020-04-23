@@ -51,6 +51,8 @@ let adminSettingsOpen = false;
 // jQuery element cache
 const setupSpinner = $("#setup-spinner") as JQuery;
 const overlayContainer = $("#overlay-container") as JQuery;
+const joinOrCreateDialog = $("#join-or-create") as JQuery;
+const iconSelector = $("#select-icon") as JQuery;
 
 const adminSettingsBtn = $("#admin-settings-btn") as JQuery;
 const adminSettingsWindow = $("#admin-settings-window") as JQuery;
@@ -61,13 +63,15 @@ const chatInput = $("#chat-input") as JQuery;
 const centerCards = $("#center-cards") as JQuery;
 const curBlackCard = $("#cur-black-card") as JQuery;
 const centralAction = $("#central-action") as JQuery;
+const curCzarText = $("#cur-czar-text") as JQuery;
 
 /********************
  * Helper Functions *
  ********************/
 
 function resetRoomMenu() {
-  $("#select-icon").show();
+  iconSelector.hide();
+  joinOrCreateDialog.show();
   $("#set-username-submit").attr("value", "Set Username");
 
   // TODO: is this even legal? (null as unknown as string)
@@ -326,6 +330,20 @@ function addUser(user: User, flair = false) {
       </div>
     </div>
   `);
+
+  if (user.state === UserState.czar) {
+    if (user.id === userId) {
+      curCzarText.text("You are the Card Czar");
+    } else {
+      curCzarText.text(user.name + " is the Card Czar");
+    }
+  } else if (user.state === UserState.winner || user.state === UserState.winnerAndNextCzar) {
+    if (user.id === userId) {
+      curCzarText.text("You are the winner!");
+    } else {
+      curCzarText.text(user.name + " is the winner!");
+    }
+  }
 }
 
 function sortUserList() {
@@ -414,7 +432,7 @@ let selectedIcon: string | null = null;
 function setIcon() {
   if (!selectedIcon || !userId) return;
 
- $("#select-icon").hide();
+  iconSelector.hide();
  setupSpinner.show();
   
   socket.emit("setIcon", {
@@ -423,7 +441,7 @@ function setIcon() {
     setupSpinner.hide();
     if (response.error) {
       console.error("Failed to set icon:", response.error);
-      $("#select-icon").show();
+      iconSelector.show();
       return;
     }
     $("#set-username").show();
@@ -432,7 +450,7 @@ function setIcon() {
 }
 
 function addIcon(name: string) {
-  $("#select-icon").children("#icons").append(`
+  iconSelector.children("#icons").append(`
     <div class="icon ${name == selectedIcon ? "selected" : ""}" id="icon-${name}">
       <i class="fas fa-${name}"></i>
     </div>
@@ -462,7 +480,7 @@ function addIcon(name: string) {
 }
 
 function populateIconSelector(icons: Array<string>) {
-  $("#select-icon").children("#icons").empty();
+  iconSelector.children("#icons").empty();
   availableIcons = icons;
   iconChoices = [];
 
@@ -524,6 +542,16 @@ socket.on("iconTaken", (event: any) => {
  * Socket Handling *
  *******************/
 
+{
+  let roomIdStr = getURLParam("room");
+  let roomToken = getURLParam("token");
+  if (roomIdStr && roomToken && parseInt(roomIdStr)) {
+    joinOrCreateDialog.hide();
+    iconSelector.show();
+  }
+}
+
+
 socket.on("init", (data: any) => {
   if (data.error) return console.error("Failed to initialize socket:", data.error);
   console.debug("Obtained userId " + data.userId + " and token " + data.userToken);
@@ -544,6 +572,8 @@ socket.on("init", (data: any) => {
     console.debug("Trying to join room #" + roomId + " with token #" + roomToken);
     $("#set-username-submit").attr("value", "Join Room");
 
+    setupSpinner.show();
+
     socket.emit("joinRoom", {
       roomId: roomId,
       token: roomToken,
@@ -553,7 +583,6 @@ socket.on("init", (data: any) => {
         console.warn("Failed to join room #" + roomId + ":", response.error);
         setupSpinner.hide();
         resetRoomMenu();
-        populateIconSelector(data.icons);
         return;
       }
 
@@ -609,9 +638,6 @@ socket.on("init", (data: any) => {
 
       setupSpinner.hide();
     });
-  } else {
-    populateIconSelector(data.icons);
-    setupSpinner.hide();
   }
 });
 
@@ -672,12 +698,29 @@ socket.on("applyFlair", (data: any) => {
  * Room Setup *
  **************/
 
-$("#username-input").keyup(event => {
+$("#create-room-mode").on("click", () => {
+  joinOrCreateDialog.hide();
+  setupSpinner.show();
+
+  socket.emit("getAvailableIcons", {}, (response: any) => {
+    setupSpinner.hide();
+
+    if (response.error) {
+      joinOrCreateDialog.show();
+      return console.warn("Failed to get available icons:", response.error);
+    }
+
+    iconSelector.show();
+    populateIconSelector(response.icons);
+  });
+});
+
+$("#username-input").on("keyup", () => {
   let userName = ($("#username-input").val() as string).replace(/^\s+|\s+$/g, "");
   $("#set-username-submit").prop("disabled", userName.length === 0);
 });
 
-$("#set-username").submit(event => {
+$("#set-username").on("submit", event => {
   event.preventDefault();
 
   let user = users[userId];
@@ -970,8 +1013,6 @@ socket.on("selectResponseGroup", (data: any) => {
     $("#select-winner").show();
     centerCards.addClass("czar-mode");
   }
-
-  console.debug("Selecting group", data.group);
 
   if (room.curPrompt.pick === 1) {
     $(".selected-response").removeClass("selected-response");

@@ -14,7 +14,7 @@
 	<link rel="icon" type="image/png" sizes="512x512"  href="icon/android-chrome-512x512.png">
 	<link rel="manifest" href="icon/site.webmanifest">
 
-	<link rel="stylesheet" type="text/css" href="inc/main.css?ver=0.2.1">
+	<link rel="stylesheet" type="text/css" href="inc/main.css?ver=0.2.2">
 </head>
 <body>
 	<div id="game-wrapper">
@@ -25,6 +25,9 @@
 					<span id="recycle-hand" title="Recycle Hand"><i class="fas fa-recycle"></i></span>
 				</div>
 			</div>
+		</div>
+		<div id="cur-czar-mobile">
+			<div id="cur-czar-text"></div>
 		</div>
 		<div id="center-cards">
 			<div id="cur-black-card"></div>
@@ -57,20 +60,23 @@
 			<div id="settings-panel">
 				<div id="settings-title">
 					<h1>Cards Against Quarantine</h1>
-					<p>A party game for isolated people.</p><br />
+					<p>A party game for isolated people.</p>
 				</div>
-				<i id="setup-spinner" class="fas fa-spinner fa-spin fa-3x fa-fw"></i>
-				<div id="select-icon">
+				<div id="join-or-create">
+					<button id="join-room-mode" title="Join an open room">Join Room</button>
+					<button id="create-room-mode" title="Create a new room">Create Room</button>
+				</div>
+				<div id="setup-spinner" hidden>
+					<br />
+					<i class="fas fa-spinner fa-spin fa-3x fa-fw"></i>
+				</div>
+				<div id="select-icon" hidden>
+					<br />
 					<div id="icons"></div><br />
 					<button id="set-icon" disabled>Select Icon</button>
-					<div id="credit">
-						<p>
-							Enjoying Cards Against Quarantine?<br />
-							Consider contributing to the server costs on <a target="_blank" href="https://www.patreon.com/caq">Patreon</a>.
-						</p>
-					</div>
 				</div>
 				<form id="set-username" hidden>
+					<br />
 					<input type="text" id="username-input" spellcheck="false" autocomplete="off" placeholder="Pick a username..." required="true" maxlength=16 />
 					<br /><br />
 					<input type="submit" value="Create Room" id="set-username-submit" disabled/>
@@ -85,6 +91,12 @@
 						</div>
 					</div>
 					<button id="enter-room">Close</button>
+				</div>
+				<div id="credit">
+					<p class="patreon-msg">
+						Enjoying Cards Against Quarantine?<br />
+						Consider contributing to the server costs on <a target="_blank" href="https://www.patreon.com/caq">Patreon</a>.
+					</p>
 				</div>
 			</div>
 		</div>
@@ -127,6 +139,6 @@
 			</div>
 		</div>
 	</div>
-	<script src="inc/bundle.js?ver=0.2"></script>
+	<script src="inc/bundle.js?ver=0.2.1"></script>
 </body>
 </html>

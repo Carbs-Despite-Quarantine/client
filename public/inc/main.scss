@@ -284,8 +284,29 @@ input[type=text], input[type=number] {
 				transition: $resizeTransition;
 			}
 
-			@media only screen and (max-width: $handWidth) {
+			@media only screen and (max-width: $handWidth + 70px) {
 				top: calc(100% - #{$cardHeight * $cardScale} - 85px);
+			}
+		}
+	}
+
+
+	#cur-czar-mobile {
+		display: none;
+		@media only screen and (max-width: $secondTransitionWidth) {
+			position: absolute;
+			top: 0;
+			width: calc(100%);
+			background-color: white;
+			border-bottom: solid 1px $outlineColor;
+			height: 40px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			#cur-czar-text {
+				font-size: 20px;
+				font-weight: 700;
 			}
 		}
 	}
@@ -949,6 +970,13 @@ input[type=text], input[type=number] {
 				cursor: not-allowed;
 				color: black;
 				opacity: 0.4;
+			}
+		}
+
+		.patreon-msg {
+			a {
+				text-decoration: none;
+				font-weight: 700;
 			}
 		}
 	}

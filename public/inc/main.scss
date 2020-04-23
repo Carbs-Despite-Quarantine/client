@@ -1000,7 +1000,13 @@ input[type=text], input[type=number] {
 					justify-content: center;
 					display: flex;
 					flex-wrap: wrap;
-					transition: 0.5s ease;
+					transition: all 0.5s ease, max-height 1ms;
+					overflow: hidden;
+					max-height: 58px * 2;
+
+					@media only screen and (max-width: 387px) {
+						max-height: 58px * 3;
+					}
 
 					.icon {
 						margin: 4px;
@@ -1095,35 +1101,25 @@ input[type=text], input[type=number] {
 		}
 
 		.room-settings-panel {
-			max-height: 800px;
+			max-height: 90vh;
 			transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
+			overflow-y: auto;
 
-			@media only screen and (max-height: 700px), (-webkit-min-device-pixel-ratio: 2) and (max-height: 1000px) {
-				max-height: 500px;
-				overflow-y: scroll;
+			scrollbar-width: thin;
+			scrollbar-color: $contrastColor $outlineColor;
 
-				scrollbar-width: thin;
-				scrollbar-color: $contrastColor $outlineColor;
-
-				transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
-
-				&::-webkit-scrollbar {
-					width: 4px;
-				}
-
-				&::-webkit-scrollbar-thumb {
-					border-radius: 0px;
-					background-color: $contrastColor;
-				}
-
-				&::-webkit-scrollbar-track {
-					border-radius: 0px;
-					background-color: $outlineColor;
-				}
+			&::-webkit-scrollbar {
+				width: 4px;
 			}
 
-			@media only screen and (max-height: 550px) {
-				max-height: 300px;
+			&::-webkit-scrollbar-thumb {
+				border-radius: 0px;
+				background-color: $contrastColor;
+			}
+
+			&::-webkit-scrollbar-track {
+				border-radius: 0px;
+				background-color: $outlineColor;
 			}
 
 			.room-option-dropdown {
@@ -1203,8 +1199,5 @@ input[type=text], input[type=number] {
 				}
 			}
 		}
-	}
-
-	#admin-settings-window {
 	}
 }

@@ -7,7 +7,6 @@ import * as helpers from "./client-helpers";
 import {User, UserState} from "./struct/users";
 import {Message, Room, RoomState} from "./struct/rooms";
 import {BlackCard, Card} from "./struct/cards";
-import {getURLParam} from "./client-helpers";
 
 /********************
  * Global Variables *
@@ -53,6 +52,7 @@ const setupSpinner = $("#setup-spinner") as JQuery;
 const overlayContainer = $("#overlay-container") as JQuery;
 const joinOrCreateDialog = $("#join-or-create") as JQuery;
 const iconSelector = $("#select-icon") as JQuery;
+const iconBackBtn = $("#cancel-select-icon") as JQuery;
 
 const adminSettingsBtn = $("#admin-settings-btn") as JQuery;
 const adminSettingsWindow = $("#admin-settings-window") as JQuery;
@@ -64,6 +64,7 @@ const centerCards = $("#center-cards") as JQuery;
 const curBlackCard = $("#cur-black-card") as JQuery;
 const centralAction = $("#central-action") as JQuery;
 const curCzarText = $("#cur-czar-text") as JQuery;
+const hand = $("#hand");
 
 /********************
  * Helper Functions *
@@ -72,10 +73,10 @@ const curCzarText = $("#cur-czar-text") as JQuery;
 function resetRoomMenu() {
   iconSelector.hide();
   joinOrCreateDialog.show();
+  iconBackBtn.show();
   $("#set-username-submit").attr("value", "Set Username");
 
-  // TODO: is this even legal? (null as unknown as string)
-  window.history.pushState(null, null as unknown as string, window.location.href.split("?")[0]);
+  window.history.pushState(null, null as any, window.location.href.split("?")[0]);
 
   roomId = null;
   room = null;
@@ -133,7 +134,7 @@ function clearLikesDiv(likesDiv: JQuery, msgId: number) {
   let message = room.messages[msgId];
 
   // Listen for clicks on the heart icon
-  likesDiv.children(".msg-heart").first().click(event => {
+  likesDiv.children(".msg-heart").first().on("click", () => {
     // Remove like if already added
     if (message.likes.indexOf(userId) != -1) {
       socket.emit("unlikeMessage", {
@@ -246,7 +247,7 @@ function addMessage(message: Message, addToRoom=true) {
 
   let user = users[message.userId];
 
-  $("#chat-history").append(`
+  chatHistory.append(`
     <div class="icon-container msg-container ${message.isSystemMsg ? "system-msg" : "user-msg"} ${room.flaredUser === message.userId ? "flared-user" : ""}" id="msg-${message.id}">
       <div class="icon msg-icon">
         <i class="fas fa-${user.icon}"></i>
@@ -270,7 +271,7 @@ function addMessage(message: Message, addToRoom=true) {
   }
 
   if (!message.isSystemMsg) {
-    $("#msg-" + message.id).dblclick(event => likeMessage(message));
+    $("#msg-" + message.id).on("dblclick", () => likeMessage(message));
   }
 }
 
@@ -281,7 +282,7 @@ function populateChat(messages: Record<number, Message>) {
 }
 
 function applyAdminSettings() {
-  let flairUserId = $("#select-flair-user").val();
+  let flairUserId = flairUserDropdown.val();
   if (flairUserId) {
     socket.emit("applyFlair", {
       userId: flairUserId === "none" ? undefined : parseInt(flairUserId as string)
@@ -351,26 +352,19 @@ function sortUserList() {
   $("#user-list").empty();
 
   let activeUsers: Array<User> = [];
-  let inactiveUsers: Array<User> = [];
 
   for (const roomUserId in users) {
     let roomUser = users[roomUserId];
 
     if (roomUser.id === room.flaredUser) addUser(roomUser, true);
-    else if (roomUser.state === UserState.inactive) inactiveUsers.push(roomUser);
-    else activeUsers.push(roomUser);
+    else if (roomUser.state !== UserState.inactive) activeUsers.push(roomUser);
   }
 
   activeUsers.sort((a, b) => b.score - a.score);
-  inactiveUsers.sort((a, b) => b.score - a.score);
 
   activeUsers.forEach(roomUser => {
     if (roomUser.icon && roomUser.name) addUser(roomUser);
   });
-
-  inactiveUsers.forEach(roomUser => {
-    if (roomUser.icon && roomUser.name) addUser(roomUser);
-  })
 }
 
 function setUserState(userId: number, state: UserState) {
@@ -378,14 +372,10 @@ function setUserState(userId: number, state: UserState) {
   $("#user-state-" + userId).text(getStateString(state));
 }
 
-function setUserScore(userId: number, score: number) {
-  users[userId].score = score;
-  $("#user-score-" + userId).text(score);
-}
-
 function clearSelectedCards() {
-  $(".selected-card").children(".card-footer").children(".specials").remove();
-  $(".selected-card").removeClass("selected-card");
+  const selectedCard = $(".selected-card");
+  selectedCard.children(".card-footer").children(".specials").remove();
+  selectedCard.removeClass("selected-card");
 
   selectedCards = {};
 }
@@ -404,7 +394,7 @@ function addExpansionSelector(id: string, name: string, selected = false, forAdm
   if (selected) expansionsSelected.push(id);
   
   // Clicking an expansion will toggle it
-  $("#expansion-" + id).on("click", event => {
+  $("#expansion-" + id).on("click", () => {
     let target = $("#expansion-" + id);
     if (target.hasClass("selected")) {
       target.removeClass("selected");
@@ -433,7 +423,7 @@ function setIcon() {
   if (!selectedIcon || !userId) return;
 
   iconSelector.hide();
- setupSpinner.show();
+  setupSpinner.show();
   
   socket.emit("setIcon", {
     icon: selectedIcon
@@ -459,7 +449,7 @@ function addIcon(name: string) {
   const element = $("#icon-" + name);
   if (element.length == 0) return console.warn("Failed to get icon " + name);
 
-  element.on("click",event => {
+  element.on("click",() => {
     let idStr = element.attr("id");
     if (!idStr) return console.warn("Clicked on invalid icon button");
 
@@ -474,7 +464,7 @@ function addIcon(name: string) {
     $("#set-icon").prop("disabled", false);
   });
 
-  element.dblclick(event => {
+  element.on("dblclick", () => {
     setIcon();
   });
 }
@@ -498,7 +488,7 @@ function populateIconSelector(icons: Array<string>) {
   if (selectedIcon && iconChoices.indexOf(selectedIcon) == -1) selectedIcon = null;
 }
 
-$("#set-icon").click(event => {
+$("#set-icon").on("click", () => {
   setIcon();
 });
 
@@ -523,7 +513,7 @@ socket.on("iconTaken", (event: any) => {
     }
 
     // Find a new icon to replace it
-    let newIcon;
+    let newIcon = undefined;
     while (!newIcon || iconChoices.indexOf(newIcon) != -1) {
       newIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
     }
@@ -543,11 +533,12 @@ socket.on("iconTaken", (event: any) => {
  *******************/
 
 {
-  let roomIdStr = getURLParam("room");
-  let roomToken = getURLParam("token");
+  let roomIdStr = helpers.getURLParam("room");
+  let roomToken = helpers.getURLParam("token");
   if (roomIdStr && roomToken && parseInt(roomIdStr)) {
     joinOrCreateDialog.hide();
     iconSelector.show();
+    iconBackBtn.hide();
   }
 }
 
@@ -558,9 +549,9 @@ socket.on("init", (data: any) => {
   userId = data.userId;
   userToken = data.userToken;
 
-  let roomIdStr = getURLParam("room");
-  let roomToken = getURLParam("token");
-  let adminToken = getURLParam("adminToken") || undefined;
+  let roomIdStr = helpers.getURLParam("room");
+  let roomToken = helpers.getURLParam("token");
+  let adminToken = helpers.getURLParam("adminToken") || undefined;
 
   if (roomIdStr && roomToken) {
     roomId = parseInt(roomIdStr);
@@ -580,66 +571,70 @@ socket.on("init", (data: any) => {
       adminToken: adminToken
     }, (response: any) => {
       if (response.error) {
-        console.warn("Failed to join room #" + roomId + ":", response.error);
+        console.warn("Failed to join room #" + roomId + " with token #" + roomToken + ":", response.error);
         setupSpinner.hide();
         resetRoomMenu();
         return;
       }
 
-      populateIconSelector(response.iconChoices);
-      console.debug("Joined room #" + roomId);
-
-      users = response.users;
-      room = response.room;
-
-      if (!room) return console.warn("Recieved invalid room");
-
-      room.link = window.location.href;
-
-      populateChat(room.messages);
-      sortUserList();
-
-      if (room.curPrompt) {
-        setBlackCard(room.curPrompt);
-
-        if (room.state === RoomState.readingCards && response.responseGroups) {
-          const responsesCount = Object.keys(response.responseGroups).length;
-          centerCards.addClass("responses-shown");
-
-          const responseCards = $("#response-cards") as JQuery;
-
-          console.debug("Adding response groups:", response.responseGroups);
-
-          for (let groupId = 0; groupId < responsesCount; groupId++) {
-            const group = response.responseGroups[groupId];
-
-            if (room.curPrompt.pick === 1) {
-              const card = group[0];
-              if (card) appendCard(card, responseCards, true, "response-card-" + groupId);
-              else responseCards.append(getCardBackHTML("response-card-" + groupId, true, true));
-            } else {
-              responseCards.append(getResponseGroupHTML(groupId, Object.keys(group).length, false, group));
-            }
-          }
-
-          if (room.selectedResponse) {
-            if (room.curPrompt.pick === 1) $("#response-card-" + room.selectedResponse).addClass("selected-response");
-            else $("#response-group" + room.selectedResponse).addClass("selected-group");
-          }
-        } else if (room.state === RoomState.viewingWinner && response.winningCards) {
-          setWinner(response.winningCards);
-        }
-      }
+      joinRoom(response);
 
       if (adminToken) {
         adminSettingsBtn.show();
-        packs = response.packs;
+        packs = data.packs;
       }
 
       setupSpinner.hide();
     });
   }
 });
+
+function joinRoom(data: any) {
+  populateIconSelector(data.iconChoices);
+  console.debug("Joined room #" + data.room.id);
+
+  users = data.users;
+  room = data.room;
+
+  if (!room) return console.warn("Received invalid room");
+
+  room.link = window.location.href;
+
+  populateChat(room.messages);
+  sortUserList();
+
+  if (room.curPrompt) {
+    setBlackCard(room.curPrompt);
+
+    if (room.state === RoomState.readingCards && data.responseGroups) {
+      const responsesCount = Object.keys(data.responseGroups).length;
+      centerCards.addClass("responses-shown");
+
+      const responseCards = $("#response-cards") as JQuery;
+
+      console.debug("Adding response groups:", data.responseGroups);
+
+      for (let groupId = 0; groupId < responsesCount; groupId++) {
+        const group = data.responseGroups[groupId];
+
+        if (room.curPrompt.pick === 1) {
+          const card = group[0];
+          if (card) appendCard(card, responseCards, true, "response-card-" + groupId);
+          else responseCards.append(getCardBackHTML("response-card-" + groupId, true, true));
+        } else {
+          responseCards.append(getResponseGroupHTML(groupId, Object.keys(group).length, false, group));
+        }
+      }
+
+      if (room.selectedResponse) {
+        if (room.curPrompt.pick === 1) $("#response-card-" + room.selectedResponse).addClass("selected-response");
+        else $("#response-group" + room.selectedResponse).addClass("selected-group");
+      }
+    } else if (room.state === RoomState.viewingWinner && data.winningCards) {
+      setWinner(data.winningCards);
+    }
+  }
+}
 
 socket.on('reconnect_attempt', () => {
   socket.io.opts.query = {
@@ -678,7 +673,7 @@ socket.on("roomSettings", (data: any) => {
   setBlackCard(data.blackCard);
 });
 
-window.addEventListener("beforeunload", (event) => {
+window.addEventListener("beforeunload", () => {
   socket.emit("userLeft");
 });
 
@@ -690,7 +685,7 @@ socket.on("applyFlair", (data: any) => {
   room.flaredUser = data.userId;
   sortUserList();
 
-  $("#chat-history").empty();
+  chatHistory.empty();
   populateChat(room.messages);
 });
 
@@ -713,6 +708,65 @@ $("#create-room-mode").on("click", () => {
     iconSelector.show();
     populateIconSelector(response.icons);
   });
+});
+
+$("#join-room-mode").on("click", () => {
+  joinOrCreateDialog.hide();
+  setupSpinner.show();
+
+  socket.emit("joinOpenRoom", {}, (response: any) => {
+    if (response.error) {
+      joinOrCreateDialog.show();
+      setupSpinner.hide();
+      return console.warn("Failed to join an open room:", response.error);
+    }
+
+    let room = response.room;
+    console.debug(room);
+    let link = window.location.href.split("?")[0] + "?room=" + room.id + "&token=" + room.token;
+
+    roomId = room.id;
+    window.history.pushState(null, null as any, link);
+
+    joinRoom(response);
+
+    iconSelector.show();
+    setupSpinner.hide();
+  });
+});
+
+iconBackBtn.on("click", () => {
+  if (room) {
+    // Delete the client room
+    room = null;
+
+    // Re-initialize users array with only the client
+    users = {};
+    users[userId] = new User(userId, false, UserState.idle,undefined, undefined,0);
+
+    // Remove center cards
+    curBlackCard.empty();
+    clearResponseCards();
+
+    // Clear hand
+    clearSelectedCards();
+    hand.empty();
+
+    // Clear user list and top info text
+    $("#user-list").empty();
+    $("#cur-czar-text").text("");
+
+    // Clear chat
+    chatHistory.empty();
+
+    resetRoomMenu();
+
+    // Inform the server of leave
+    socket.emit("leaveRoom");
+  }
+
+  iconSelector.hide();
+  joinOrCreateDialog.show();
 });
 
 $("#username-input").on("keyup", () => {
@@ -740,7 +794,7 @@ $("#set-username").on("submit", event => {
       setupSpinner.hide();
 
       if (response.error) {
-        console.error("Failed to join room #" + room.id + ":", response.error);
+        console.error("Failed to enter room #" + room.id + ":", response.error);
         resetRoomMenu();
         return;
       }
@@ -790,9 +844,7 @@ $("#set-username").on("submit", event => {
       $("#user-setup-window").hide();
 
       room.link = window.location.href.split("?")[0] + "?room=" + room.id + "&token=" + room.token;
-
-      // TODO: bit dumb
-      window.history.pushState(null, null as unknown as string, room.link);
+      window.history.pushState(null, null as any, room.link);
 
       populateChat(room.messages);
       sortUserList();
@@ -857,7 +909,7 @@ $(".room-link").on("click", function() {
   // Actually copy the link
   $("body").append(`<textarea id="fake-for-copy" readonly>${room.link}</textarea>`);
   let fake = $("#fake-for-copy")[0];
-  // TODO: error ?!
+
   // @ts-ignore
   fake.select();
   document.execCommand("copy");
@@ -883,7 +935,7 @@ $(".room-link").on("click", function() {
  * Chat System *
  ***************/
 
-$("#chat-input").on("keyup", event => {
+chatInput.on("keyup", event => {
   event.stopPropagation();
 
   let content = chatInput.val();
@@ -896,7 +948,7 @@ $("#chat-input").on("keyup", event => {
     socket.emit("chatMessage", {
       content: contentStripped
     }, (response: any) => {
-      $("#chat-input").val("");
+      chatInput.val("");
       if (response.error) return console.warn("Failed to send chat message:", response.error);
       if (response.message) addMessage(response.message);
     });
@@ -904,7 +956,7 @@ $("#chat-input").on("keyup", event => {
   }
 });
 
-$(window).on("resize", event => {
+$(window).on("resize", () => {
   scrollMessages();
 });
 
@@ -1191,7 +1243,7 @@ function addSelectIndicator(cardElement: JQuery, num: number) {
 
 // TODO: animate?
 function addCardToDeck(card: Card) {
-  appendCard(card, $("#hand"));
+  appendCard(card, hand);
   let cardElement = $("#white-card-" + card.id);
   cardElement.on("click", () => {
     if (!room || !room.curPrompt) return;
@@ -1270,7 +1322,7 @@ function showSubmitBtn() {
   centralAction.show().text("Submit Card" + (room.curPrompt.pick > 1 ? "s" : ""));
 }
 
-$("#hand").sortable({
+hand.sortable({
   tolerance: "pointer"
 });
 
@@ -1278,7 +1330,7 @@ $("#game-wrapper").on("click",event => {
   if (!room) return;
 
   if (!submittingCards && ($(event.target).is("#game-wrapper") ||
-      $(event.target).is("#hand") ||
+      $(event.target).is(hand) ||
       $(event.target).is("#response-cards") ||
       $(event.target).is(centerCards))) {
 
@@ -1391,7 +1443,7 @@ $("#recycle-hand").on("click", () => {
     recyclingCards = false;
     if (response.error) return console.warn("Failed to recycle hand:", response.error);
     if (response.cards) {
-      $("#hand").empty();
+      hand.empty();
       addCardsToDeck(response.cards);
     }
     if (response.message) addMessage(response.message);

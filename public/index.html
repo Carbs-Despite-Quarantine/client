@@ -102,7 +102,20 @@
 				</div>
 			</div>
 		</div>
-		<div class="overlay-window room-settings-window" id="room-setup-window" hidden>
+		<div class="overlay-window big-window" id="open-games-list" hidden>
+			<div id="open-games-panel">
+				<div id="open-games-header">
+					<h1>Join a Room</h1>
+					<p>Select a room from the list below to join.</p>
+				</div>
+				<div id="rooms-list"></div><br />
+				<div id=""rooms-list-back-wrapper">
+					<button id="room-list-back-btn">Go Back</button>
+				</div>
+				<br />
+			</div>
+		</div>
+		<div class="overlay-window big-window" id="room-setup-window" hidden>
 			<div class="room-settings-panel" id="room-settings">
 				<h1>Room Setup</h1>
 				<p>Adjust these settings to fine-tune your game.</p>
@@ -129,10 +142,11 @@
 				<h2>Expansions</h2>
 				<div class="expansions-list" id="initial-expansions-list"></div>
 				<br />
+				<!-- <button id="add-custom-packs">Add Custom Packs</button> -->
 				<button id="start-game">Start Game</button>
 			</div>
 		</div>
-		<div class="overlay-window room-settings-window" id="admin-settings-window" hidden>
+		<div class="overlay-window big-window" id="admin-settings-window" hidden>
 			<div class="room-settings-panel" id="admin-settings-panel">
 				<h1>Room Settings</h1>
 				<p>Debug and adjust rooms mid-game.</p>

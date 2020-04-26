@@ -1087,23 +1087,125 @@ input[type=text], input[type=number] {
 		}
 	}
 
-	.room-settings-window {
+	.big-window {
 		$userOverlayWidth: 800px;
 
 		width: $userOverlayWidth;
-		padding: 20px;
+		max-height: 90vh;
+		padding: 0 20px;
 		text-align: center;
-		align: center;
 
 		@media only screen and (max-width: $userOverlayWidth + 40px) {
 			width: 100%;
 			border-radius: 0;
 		}
 
+		#open-games-panel {
+			@media only screen and (max-width: $userOverlayWidth + 40px) {
+				margin: 0 10px;
+			}
+			height: 80vh;
+			display: flex;
+			flex-direction: column;
+
+			#open-games-header {
+				h1 {
+					margin-bottom: 5px;
+				}
+			}
+
+			#rooms-list {
+				display: flex;
+				flex-direction: column;
+				overflow-x: auto;
+				padding-right: 10px;
+				height: 100%;
+
+				scrollbar-width: thin;
+				scrollbar-color: $contrastColor $outlineColor;
+
+				&::-webkit-scrollbar {
+					width: 4px;
+				}
+
+				&::-webkit-scrollbar-thumb {
+					border-radius: 0px;
+					background-color: $contrastColor;
+				}
+
+				&::-webkit-scrollbar-track {
+					border-radius: 0px;
+					background-color: $outlineColor;
+				}
+
+				.room-listing {
+					background-color: $iconBackground;
+					border: 3px solid $outlineColor;
+					margin: 10px 0;
+					display: flex;
+					flex-wrap: wrap;
+					align-items: center;
+					padding: 10px 10px 10px 20px;
+					border-radius: 18px;
+					transition: border-color 0.2s ease;
+
+					&:hover {
+						border-color: black;
+					}
+
+					.room-listing-info {
+						width: calc(25% - 10px);
+						text-align: left;
+						margin: 0 5px;
+					}
+
+					.room-listing-button {
+						width: 25%;
+						text-align: right;
+					}
+
+					@media only screen and (max-width: 540px) {
+						.room-listing-info {
+							width: calc(50% - 10px);
+							text-align: center;
+
+							p {
+								margin: 5px;
+							}
+						}
+
+						.room-listing-button {
+							width: 50%;
+							text-align: center;
+						}
+					}
+
+					@media only screen and (max-width: 370px) {
+						.room-listing-info {
+							width: calc(100% - 10px);
+
+							p br.inactive-count {
+								display: none;
+							}
+						}
+
+						.room-listing-button {
+							width: 100%;
+						}
+					}
+				}
+			}
+
+			#room-list-back-btn {
+				margin: 0;
+			}
+		}
+
 		.room-settings-panel {
 			max-height: 90vh;
 			transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
 			overflow-y: auto;
+			padding-bottom: 10px;
 
 			scrollbar-width: thin;
 			scrollbar-color: $contrastColor $outlineColor;

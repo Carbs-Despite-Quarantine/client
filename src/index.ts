@@ -719,15 +719,20 @@ $("#create-room-mode").on("click", () => {
   });
 });
 
-$("#join-room-mode").on("click", () => {
-  joinOrCreateDialog.hide();
+function joinOpenRoom(roomId: number, token: string) {
+  $("#user-setup-window").show();
+  $("#open-games-list").hide();
   setupSpinner.show();
 
-  socket.emit("joinOpenRoom", {}, (response: any) => {
+  socket.emit("joinRoom", {
+    roomId: roomId,
+    token: token
+  }, (response: any) => {
     if (response.error) {
-      joinOrCreateDialog.show();
+      console.warn("Failed to join open room #" + roomId + " with token #" + token + ":", response.error);
       setupSpinner.hide();
-      return console.warn("Failed to join an open room:", response.error);
+      resetRoomMenu();
+      return;
     }
 
     let room = response.room;
@@ -741,6 +746,82 @@ $("#join-room-mode").on("click", () => {
     iconSelector.show();
     setupSpinner.hide();
   });
+}
+
+function addRoomListing(roomInfo: any) {
+  const lastActive = roomInfo.lastActive;
+  let timeString = "Now";
+
+  if (lastActive > 60 * 60 * 24) {
+    const days = Math.round(lastActive / 60 / 60 / 24);
+    if (days < 2) timeString = "1 day ago";
+    else timeString = `${days} days ago`;
+  } else if (lastActive > 60 * 60) {
+    const hrs = Math.round(lastActive / 60 / 60);
+    if (hrs < 2) timeString = "1 hour ago";
+    else timeString = `${hrs} hrs ago`;
+  } else if (lastActive > 60) {
+    const mins = Math.round(lastActive / 60);
+    if (mins < 2) timeString = "1 min ago";
+    else timeString = `${mins} mins ago`;
+  } else if (lastActive > 30) {
+    timeString = `${Math.round(lastActive)} secs ago`;
+  }
+
+  $("#rooms-list").append(`
+    <div class="room-listing">
+      <div class="room-listing-info">
+        <p>
+          <b>${roomInfo.edition}</b><br />
+          ${roomInfo.packs} Expansions
+        </p>
+      </div>
+      <div class="room-listing-info">
+        <p>
+          ${roomInfo.players} Players<br class="inactive-count"/>
+          (${roomInfo.inactivePlayers} Inactive)
+        </p>
+      </div>
+      <div class="room-listing-info">
+        <p>Active ${timeString}</p>
+      </div>
+      <div class="room-listing-button">
+        <button id="join-room-${roomInfo.id}">Join</button>
+      </div>
+    </div>
+  `);
+
+  $("#join-room-" + roomInfo.id).on("click", () => {
+    joinOpenRoom(roomInfo.id, roomInfo.token);
+  });
+}
+
+$("#join-room-mode").on("click", () => {
+  joinOrCreateDialog.hide();
+  setupSpinner.show();
+
+  socket.emit("getOpenRooms", {}, (response: any) => {
+    if (response.error || !response.openRooms) {
+      joinOrCreateDialog.show();
+      setupSpinner.hide();
+      return console.warn("Failed to get open room list:", response.error);
+    }
+
+    response.openRooms.forEach((roomInfo: any) => {
+      addRoomListing(roomInfo);
+    });
+
+    $("#user-setup-window").hide();
+    $("#open-games-list").show();
+    setupSpinner.hide();
+  });
+});
+
+$("#room-list-back-btn").on("click", () => {
+  $("#user-setup-window").show();
+  $("#open-games-list").hide();
+  joinOrCreateDialog.show();
+  $("#rooms-list").empty();
 });
 
 iconBackBtn.on("click", () => {

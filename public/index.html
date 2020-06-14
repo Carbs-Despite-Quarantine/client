@@ -3,8 +3,8 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="description" content="Play Cards Against Humanity online while in quarantine." />
-	<title>Cards Against Quarantine</title>
+	<meta name="description" content="A Cards Against Humanity clone." />
+	<title>Carbs Despite Quarantine</title>
 
 	<link rel='shortcut icon' href='icon/favicon.ico' type='image/x-icon' />
 	<link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
@@ -59,12 +59,18 @@
 		<div class="overlay-window" id="user-setup-window">
 			<div id="settings-panel">
 				<div id="settings-title">
-					<h1>Cards Against Quarantine</h1>
-					<p>A new way to play Cards Against Humanity online.</p>
+					<h1>Carbs Despite Quarantine</h1>
+					<p class="patreon-msg">A <a href="https://www.cardsagainsthumanity.com">Cards Against Humanity</a> clone.</p>
 				</div>
 				<div id="join-or-create">
 					<button id="join-room-mode" title="Join an open room">Join Room</button>
 					<button id="create-room-mode" title="Create a new room">Create Room</button>
+
+					<div id="credit">
+						<p class="patreon-msg"><font size="-5">
+							Carbs Despite Quarantine is a Cards Against Humanity clone. It is distributed under a <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">Creative Commons Attribution Non-Commercial Share-Alike 3.0 Licence</a>. This site is in no way endorsed or sponsered by Cards Against Humanity. You can buy the original game at <a href="https://cardsagainsthumanity.com">www.cardsagainsthumanity.com</a>. Carbs Despite Quarantine is open source on <a href="https://github.com/Cards-Against-Quarantine">GitHub</a>.
+						</font></p>
+					</div>
 				</div>
 				<div id="setup-spinner" hidden>
 					<br />
@@ -94,12 +100,6 @@
 					</div>
 					<button id="enter-room">Close</button>
 				</div>
-				<div id="credit">
-					<p class="patreon-msg">
-						Enjoying Cards Against Quarantine?<br />
-						Consider contributing to the server costs on <a target="_blank" href="https://www.patreon.com/caq">Patreon</a>.
-					</p>
-				</div>
 			</div>
 		</div>
 		<div class="overlay-window big-window" id="open-games-list" hidden>
@@ -109,7 +109,7 @@
 					<p>Select a room from the list below to join.</p>
 				</div>
 				<div id="rooms-list"></div><br />
-				<div id=""rooms-list-back-wrapper">
+				<div id="rooms-list-back-wrapper">
 					<button id="room-list-back-btn">Go Back</button>
 				</div>
 				<br />

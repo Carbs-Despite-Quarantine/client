@@ -3,6 +3,7 @@ $fa-font-path: "fa/webfonts";
 @import "fa/scss/fontawesome.scss";
 @import "fa/scss/solid.scss";
 @import "fa/scss/regular.scss";
+@import "fa/scss/light.scss";
 
 $font: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
 
@@ -89,20 +90,16 @@ input[type=text], input[type=number] {
 	border: solid 1px black;
 
   &.black {
-	  background-color: black;
+	  background-color: #560773;
 	  color: white;
 	}
 
 	&.white {
-	  background-color: white;
+	  background-color: #DBBDFF;
 	  color: black;
 	}
 
 	&.front {
-	  background-size: 25px * $cardScale;
-	  background-repeat: no-repeat;
-	  background-position: 16px * $cardScale 333px * $cardScale;
-
 		.card-text {
 		  font: 24px * $cardScale $font;
 		  font-weight: 700;
@@ -122,7 +119,15 @@ input[type=text], input[type=number] {
 				font: 10px * $cardScale $font;
 				font-weight: 700;
 				padding-bottom: 28px * $cardScale;
-				padding-left: 45px * $cardScale;
+				padding-left: 20px * $cardScale;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				.footer-icon {
+					font-size: 15px * $cardScale;
+					padding-right: 2px;
+				}
 			}
 
 			.specials {
@@ -160,13 +165,7 @@ input[type=text], input[type=number] {
 			}
 		}
 
-		&.black {
-			background-image: url(cah-logo-black.svg);
-		}
-
 		&.white {
-			background-image: url(cah-logo-white.svg);
-
 			.card-footer .specials .special .special-number {
 				background-color: black;
 				color: white;

@@ -659,9 +659,9 @@ socket.on("userJoined", (data: any) => {
 });
 
 socket.on("userLeft", (data: any) => {
-  if (!room) return console.error("Recieved user left event when not in a room");
+  if (!room) return console.error("Received user left event when not in a room");
   if (!users.hasOwnProperty(data.userId)) {
-    return console.error("Recieved leave message for unknown user #" + data.userId);
+    return console.error("Received leave message for unknown user #" + data.userId);
   }
   if (data.message) addMessage(data.message);
 
@@ -1129,7 +1129,18 @@ socket.on("revealResponse", (data: any) => {
   let cardElement = $("#response-card-" + ((data.group * room.curPrompt.pick) + data.num));
   cardElement.removeClass("back").addClass("front");
   cardElement.children(".card-text").text(data.card.text);
-  cardElement.append(`<div class="card-footer"><div class="footer-text">Cards Against Quarantine</div></div>`);
+  cardElement.append(`
+    <div class="card-footer">
+      <div class="footer-text">
+        <div class="footer-icon">
+          <i class="fal fa-home"></i>
+        </div>
+        <div class="footer-msg">
+          Carbs Despite Quarantine
+       </div>
+       </div>
+     </div>
+  `);
 
   if (users[userId].state === UserState.czar) {
     cardElement.addClass("no-hover");
@@ -1218,7 +1229,7 @@ socket.on("nextRound", (data: any) => {
 function getCardBackHTML (id: string, isWhite = true, noHover = false): string {
   return `
     <div class="card ${isWhite ? "white" : "black"} back ${noHover ? "no-hover" : ""}" id="${id}">
-      <div class="card-text">Cards Against Quarantine</div>
+      <div class="card-text">Carbs Despite Quarantine</div>
     </div>
   `;
 }
@@ -1277,7 +1288,14 @@ function getCardHTML(card: any, isWhite = true, id?: string, noHover = false) {
     <div class="card ${color} front ${noHover ? "no-hover" : ""}" id="${id}">
       <div class="card-text">${card.text}</div>
       <div class="card-footer">
-        <div class="footer-text">Cards Against Quarantine</div>
+        <div class="footer-text">
+          <div class="footer-icon">
+            <i class="fal fa-home"></i>
+          </div>
+          <div class="footer-msg">
+            Carbs Despite Quarantine
+         </div>
+        </div>
   `;
 
   if (card.pick) {
